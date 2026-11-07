@@ -76,15 +76,31 @@ In the frontend, import reusable components from `@/components/core` and theme A
 
 ## Run the Expo app and API in Docker
 
-The full-stack Compose overlay builds one image containing the Expo Go development server and FastAPI. PostgreSQL, Redis, MinIO, and Keycloak run as supporting Compose services. Run the launcher for your operating system from this repository; each script detects the host LAN IPv4 address and starts the stack:
+The launcher builds and starts the Expo Go frontend, FastAPI backend, PostgreSQL, Redis, MinIO, and Keycloak. Start Docker Desktop first, and connect your phone and development machine to the same trusted network.
+
+Set up the local environment files once from the repository root:
+
+```sh
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env.local
+```
+
+In Windows PowerShell, use:
+
+```powershell
+Copy-Item backend\.env.example backend\.env
+Copy-Item frontend\.env.example frontend\.env.local
+```
+
+Then launch with one command from the repository root:
 
 ```sh
 ./scripts/run-fullstack.sh
 ```
 
-On Windows, double-click `scripts\\run-fullstack.cmd` or run it from Command Prompt. Both scripts use `backend/.env` and `frontend/.env.local`. Copy `backend/.env.example` to `backend/.env` and `frontend/.env.example` to `frontend/.env.local` before the first launch. If LAN address detection fails, set `HOST_LAN_IP` to the machine's LAN IPv4 address and run the script again.
+On Windows, after the one-time environment setup, double-click `scripts\run-fullstack.cmd` from File Explorer, or run `scripts\run-fullstack.cmd` in Command Prompt. Both launchers detect the host LAN IPv4 address automatically. If detection fails, set `HOST_LAN_IP` to the host's LAN address and run the script again.
 
-Open the `exp://` URL printed by the script in Expo Go. The API is available on port 8001; Keycloak and MinIO use ports 8081 and 9000. The stack publishes these development services on all host interfaces, so use it on a trusted network.
+When startup completes, open the `exp://` URL printed by the script in Expo Go. The API is on port 8001; Keycloak and MinIO use ports 8081 and 9000. These development services bind to all host interfaces, so run them only on a trusted network.
 
 ## App libraries
 
