@@ -4,6 +4,53 @@ Async FastAPI backend with provider-selectable OIDC auth (Cognito for production
 
 This service is in the `backend/` directory of the Broaker monorepo. Commands below assume the current directory is `backend/`, unless noted otherwise.
 
+## Architecture
+
+```text
+Web / Expo client
+       │ JSON API + Bearer access token
+       ▼
+FastAPI app (`app/main.py`)
+  ├── routes/       HTTP endpoints and request orchestration
+  ├── schemas/      Pydantic request and response models
+  ├── auth/         Bearer handling and password, Cognito, Keycloak providers
+  ├── services/     Account, property, upload, and share-token operations
+  ├── models/       SQLAlchemy persistence models
+  ├── config/       Settings, database sessions, Redis, object storage
+  └── utils/        Shared security and HTTP utilities
+       ├──────────── PostgreSQL (SQLAlchemy async, Alembic migrations)
+       ├──────────── Redis (rate limiting and shared ephemeral state)
+       └──────────── S3 API (MinIO locally; direct client uploads)
+```
+
+`app/main.py` assembles the routers and middleware. `/health` is at the origin root; application routes use the configurable `/api/v1` prefix. The implemented API contract is in [`docs/api/frontend-api-contract.md`](docs/api/frontend-api-contract.md), with its OpenAPI schema in [`docs/api/openapi.yaml`](docs/api/openapi.yaml). Database design and migrations are documented under [`docs/database/`](docs/database/).
+
+Uploads use a two-step flow: the authenticated API creates a short-lived presigned URL and server-generated `object_key`; the client PUTs bytes directly to object storage using the returned `Content-Type`. The API verifies the stored object when it is registered. The public storage endpoint must be reachable from the browser or device using the URL.
+
+## Environment configuration
+
+Copy `.env.example` to `.env`. Settings are loaded by `pydantic-settings` from environment variables and `.env` in the backend working directory. Compose overrides container connection URLs with internal service names; those names are only resolvable inside the Compose network.
+
+| Variable | Purpose |
+| --- | --- |
+| `ENVIRONMENT`, `DEBUG`, `APP_NAME` | Runtime identity and local diagnostics. Password auth is restricted to local/development/test. |
+| `API_V1_PREFIX`, `CORS_ALLOWED_ORIGINS` | API prefix and comma-separated browser origins. |
+| `DATABASE_URL` | PostgreSQL SQLAlchemy async URL; use `postgresql+asyncpg://...`. |
+| `REDIS_URL` | Redis connection URL, including its password when enabled. |
+| `AUTH_PROVIDER` | `password` for local development, or `cognito` / `keycloak` for configured identity providers. |
+| `PASSWORD_AUTH_SECRET` | Local password-token signing key. Use a random secret of at least 32 bytes; do not use the local Compose fallback in a shared deployment. |
+| `SHARE_LINK_ENCRYPTION_KEY` | Secret used to encrypt recoverable share-link tokens. |
+| `COGNITO_REGION`, `COGNITO_USER_POOL_ID`, `COGNITO_APP_CLIENT_ID` | Cognito token-verification configuration. |
+| `KEYCLOAK_ISSUER`, `KEYCLOAK_JWKS_URL`, `KEYCLOAK_CLIENT_ID` | Keycloak issuer and verification configuration. Registration/admin client credentials are backend-only and only needed for managed registration. |
+| `S3_ENDPOINT_URL` | Endpoint the API uses to access S3/MinIO. In Compose this is `http://minio:9000`. |
+| `S3_PUBLIC_ENDPOINT_URL` | Endpoint embedded in presigned URLs and opened by the client. Use `http://localhost:9000` on the same host or a device-reachable LAN/production URL. |
+| `S3_BUCKET_NAME`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | S3 bucket and credentials; local values must match MinIO. |
+| `S3_PRESIGNED_URL_EXPIRES_SECONDS`, `S3_MAX_UPLOAD_BYTES` | Upload URL lifetime and size limit. |
+| `PUBLIC_API_BASE_URL` | Public API origin used to build share links; do not include `/api/v1`. |
+| `AUTO_CREATE_TABLES` | Local-only database convenience. Normal setup uses Alembic migrations. |
+
+See [`.env.example`](.env.example) for all current variables and local defaults. Never commit `.env` or production secrets. On physical devices, replace host `localhost` values in public URLs with an address reachable from the device. The `postgres`, `redis`, and `minio` Compose hostnames are for backend containers only.
+
 ## Local setup
 
 ### Docker Compose
