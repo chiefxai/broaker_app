@@ -4,11 +4,44 @@ import { listProperties, getProperty, photoRefreshInterval } from '@/api/backend
 import { isMockMode } from '@/data/app-mode';
 import { useOptionalAuth } from '@/auth/auth-provider';
 import { getLocalProperty, listLocalProperties, saveLocalProperty } from './property-repository.web';
+import type { LocalProperty } from '@/data/mock/properties';
 
 export const localPropertyKeys = {
   all: ['local-properties'] as const,
   detail: (id: string) => ['local-properties', id] as const,
 };
+
+export function mergeLocalAndRemoteProperties(remote: LocalProperty[], local: LocalProperty[], ownerSub: string | null) {
+  const pending = local.filter((property) =>
+    (property.ownerSub === ownerSub || property.ownerSub == null)
+    && property.syncStatus !== 'synced');
+  const remoteById = new Map(remote.map((property) => [property.id, property]));
+  const mergedPending = pending.map((property) => {
+    const remoteProperty = property.remoteId ? remoteById.get(property.remoteId) : undefined;
+    if (!remoteProperty) return property;
+    return {
+      ...property,
+      ...remoteProperty,
+      id: property.id,
+      remoteId: remoteProperty.id,
+      ownerSub: property.ownerSub ?? ownerSub,
+      syncStatus: property.syncStatus,
+      offlineDraft: property.offlineDraft,
+      offlineStep: property.offlineStep,
+      syncError: property.syncError,
+    };
+  });
+  const pendingRemoteIds = new Set(pending.map((property) => property.remoteId).filter(Boolean));
+  return [
+    ...mergedPending,
+    ...remote.filter((property) => !pendingRemoteIds.has(property.id)).map((property) => ({
+      ...property,
+      remoteId: property.id,
+      ownerSub,
+      syncStatus: 'synced' as const,
+    })),
+  ];
+}
 
 export function useLocalProperties() {
   const auth = useOptionalAuth();
@@ -28,19 +61,7 @@ export function useLocalProperties() {
             await saveLocalProperty({ ...property, ownerSub });
           }
         }
-        const pending = local.filter((property) =>
-          (property.ownerSub === ownerSub || property.ownerSub == null)
-          && property.syncStatus !== 'synced');
-        const pendingRemoteIds = new Set(pending.map((property) => property.remoteId).filter(Boolean));
-        return [
-          ...pending,
-          ...remote.filter((property) => !pendingRemoteIds.has(property.id)).map((property) => ({
-            ...property,
-            remoteId: property.id,
-            ownerSub,
-            syncStatus: 'synced' as const,
-          })),
-        ];
+        return mergeLocalAndRemoteProperties(remote, local, ownerSub);
       } catch (error) {
         const local = await listLocalProperties();
         return local.filter((property) => property.ownerSub === auth.currentUser?.sub || property.ownerSub == null);
@@ -57,6 +78,7 @@ export function useLocalProperty(id: string) {
       if (isMockMode) return getLocalProperty(id);
       if (!auth?.accessToken) throw new Error('Sign in to load properties.');
       const local = await getLocalProperty(id);
+      if (local && local.syncStatus && local.syncStatus !== 'synced') return local;
       const remoteId = local?.remoteId ?? (local?.syncStatus === 'synced' ? id : null);
       if (!remoteId) return local;
       try {

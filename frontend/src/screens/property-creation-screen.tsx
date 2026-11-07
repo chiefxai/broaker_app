@@ -167,7 +167,7 @@ export default function PropertyCreationScreen() {
       return { property, privateNotes };
     },
     enabled: Boolean(requestedPropertyId && !isMockMode && auth?.accessToken && serverPropertyId
-      && (Platform.OS !== 'web' || localEditQuery.isSuccess)),
+      && (Platform.OS !== 'web' || (localEditQuery.isSuccess && (!localEditQuery.data || localEditQuery.data.syncStatus === 'synced')))),
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');

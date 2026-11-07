@@ -64,4 +64,29 @@ describe('web property sync', () => {
       syncStatus: 'synced',
     }));
   });
+
+  it('publishes a completed property when the final save requests activation', async () => {
+    const localProperty: LocalProperty = {
+      id: 'local-property-ready',
+      title: propertyWizardDraftFixture.title,
+      categoryLabel: 'Agriculture Land',
+      status: { label: 'Draft', tone: 'warning' },
+      area: null,
+      location: null,
+      priceInr: null,
+      ownerSub: 'owner-1',
+      syncStatus: 'pending',
+      offlineStep: 5,
+      offlineDraft: { draft: propertyWizardDraftFixture, loanActive: false, irrigationMethod: null, publishWhenSynced: true },
+    };
+    await saveLocalProperty(localProperty);
+
+    await expect(syncPendingWebProperties('access-token', 'owner-1')).resolves.toEqual({ synced: 1, errors: [] });
+
+    expect(mockPublishProperty).toHaveBeenCalledWith('access-token', 'remote-property-1');
+    await expect(getLocalProperty(localProperty.id)).resolves.toEqual(expect.objectContaining({
+      status: { label: 'Available', tone: 'success' },
+      syncStatus: 'synced',
+    }));
+  });
 });
