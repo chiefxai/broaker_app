@@ -1,0 +1,22 @@
+# Keep local build context small and never send credentials to the Docker daemon.
+**/.git
+**/node_modules
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/.expo
+**/coverage
+**/dist
+**/build
+**/.env
+**/.env.*
+!**/.env.example
+
+broaker app/.claude
+broaker app/.vscode
+broaker app/output
+broaker app/test
+broaker app/docs
+broaker app backend/tests
+broaker app backend/keycloak

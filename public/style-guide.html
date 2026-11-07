@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7faf7" />
+    <title>EstateFlow · UI Style Guide</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --text: #0b1c30; --text-secondary: #45464d; --background: #f7faf7;
+        --surface: #fff; --surface-low: #f0f7f1; --surface-container: #e8f5ea;
+        --surface-high: #d8eedb; --primary: #16803c; --primary-pressed: #11632e;
+        --on-primary: #fff; --accent: #16803c; --accent-container: #d8eedb;
+        --on-accent-container: #14532d; --border: #c6c6cd; --divider: #e5e7eb;
+        --icon-muted: #64748b; --success: #15803d; --success-bg: #dcfce7;
+        --warning: #92400e; --warning-bg: #fef3c7; --danger: #93000a;
+        --danger-bg: #ffdad6; --info: #166534; --info-bg: #dcfce7;
+        --neutral-bg: #e8f5ea; --shadow: 0 8px 24px rgb(11 28 48 / 7%);
+      }
+      [data-theme="dark"] {
+        color-scheme: dark;
+        --text: #f8fafc; --text-secondary: #94a3b8; --background: #090e1a;
+        --surface: #111827; --surface-low: #131d2e; --surface-container: #172a20;
+        --surface-high: #20382a; --primary: #4ade80; --primary-pressed: #86efac;
+        --on-primary: #092113; --accent: #4ade80; --accent-container: #183322;
+        --on-accent-container: #bbf7d0; --border: #1f2d42; --divider: #1f2d42;
+        --icon-muted: #94a3b8; --success: #4ade80; --success-bg: #123321;
+        --warning: #fbbf24; --warning-bg: #3b2a0e; --danger: #f87171;
+        --danger-bg: #3c1d25; --info: #bbf7d0; --info-bg: #183322;
+        --neutral-bg: #172a20; --shadow: 0 8px 24px rgb(0 0 0 / 25%);
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body { margin: 0; background: var(--background); color: var(--text); font: 14px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; transition: background .2s, color .2s; }
+      button, input { font: inherit; }
+      button { cursor: pointer; }
+      a { color: var(--accent); }
+      .topbar { position: sticky; z-index: 5; top: 0; background: color-mix(in srgb, var(--surface) 90%, transparent); backdrop-filter: blur(14px); border-bottom: 1px solid var(--divider); }
+      .topbar-inner { max-width: 1120px; min-height: 68px; margin: auto; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+      .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; letter-spacing: -.02em; }
+      .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: var(--on-primary); background: var(--primary); font-size: 20px; }
+      .brand small { display: block; color: var(--text-secondary); font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+      .theme-button { border: 0; border-radius: 999px; padding: 9px 14px; color: var(--text); background: var(--surface-container); font-weight: 600; }
+      .layout { max-width: 1120px; margin: auto; padding: 36px 24px 80px; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 32px; }
+      aside { position: sticky; top: 96px; align-self: start; display: grid; gap: 5px; }
+      aside a { padding: 8px 12px; border-radius: 9px; color: var(--text-secondary); text-decoration: none; font-size: 13px; }
+      aside a:hover { color: var(--accent); background: var(--surface-container); }
+      main { min-width: 0; display: grid; gap: 22px; }
+      .hero { padding: 8px 2px 12px; }
+      .eyebrow { margin: 0 0 6px; color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+      h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); line-height: 1.15; letter-spacing: -.04em; }
+      h2 { margin: 0; font-size: 19px; line-height: 1.3; letter-spacing: -.02em; }
+      h3 { margin: 0; font-size: 14px; }
+      p { margin: 0; color: var(--text-secondary); }
+      .hero p { max-width: 680px; margin-top: 12px; font-size: 15px; }
+      .section { min-width: 0; padding: 22px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow); }
+      .section-head { display: flex; justify-content: space-between; align-items: start; gap: 16px; margin-bottom: 18px; }
+      .section-head p { max-width: 620px; margin-top: 5px; font-size: 13px; }
+      .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 10px; }
+      .swatch { overflow: hidden; border-radius: 12px; background: var(--surface-low); }
+      .swatch-color { height: 52px; }
+      .swatch-copy { padding: 9px 10px; display: flex; justify-content: space-between; gap: 8px; font-size: 11px; }
+      .swatch-copy b { font-weight: 600; }
+      .swatch-copy code { color: var(--text-secondary); font: 10px ui-monospace, monospace; }
+      .type-list { display: grid; gap: 10px; }
+      .type-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-bottom: 9px; border-bottom: 1px solid var(--divider); }
+      .type-row:last-child { border: 0; padding: 0; }
+      .type-row small { flex: none; color: var(--text-secondary); font: 11px ui-monospace, monospace; }
+      .type-heading { font-size: 24px; line-height: 32px; font-weight: 600; }
+      .type-title { font-size: 18px; line-height: 24px; font-weight: 600; }
+      .type-label { font-size: 14px; line-height: 20px; font-weight: 600; }
+      .type-body { font-size: 14px; line-height: 22px; }
+      .type-small { font-size: 12px; line-height: 18px; }
+      .type-overline { font-size: 11px; line-height: 14px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+      .token-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
+      .token-group { display: grid; gap: 10px; }
+      .token-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--text-secondary); font-size: 12px; }
+      .space-sample { height: 8px; max-width: 100%; border-radius: 99px; background: var(--accent); }
+      .radius-samples { display: flex; flex-wrap: wrap; gap: 10px; }
+      .radius-sample { min-width: 76px; height: 58px; padding: 8px; display: grid; align-content: space-between; background: var(--surface-container); font-size: 11px; }
+      .radius-sample small { color: var(--text-secondary); }
+      .demo-stack { display: grid; gap: 14px; }
+      .demo-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+      .button { min-height: 42px; padding: 0 17px; border: 0; border-radius: 12px; background: var(--primary); color: var(--on-primary); font-weight: 600; transition: transform .15s, background .15s; }
+      .button:hover { background: var(--primary-pressed); }
+      .button:active { transform: scale(.98); }
+      .button.secondary { color: var(--accent); background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); }
+      .button.quiet { color: var(--accent); background: transparent; }
+      .button:disabled { cursor: not-allowed; opacity: .5; }
+      .input { display: block; width: 100%; min-height: 46px; padding: 0 14px; border: 0; border-radius: 12px; outline: none; color: var(--text); background: var(--surface-low); transition: box-shadow .15s, background .15s; }
+      .input::placeholder { color: var(--icon-muted); }
+      .input:focus { box-shadow: 0 0 0 2px var(--accent); }
+      .field-wrap { max-width: 420px; width: 100%; }
+      .field-wrap label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 600; }
+      .field-error { box-shadow: 0 0 0 2px var(--danger); }
+      .help { margin-top: 5px; font-size: 12px; }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+      .chip { border: 0; border-radius: 999px; padding: 6px 12px; background: var(--neutral-bg); color: var(--text-secondary); font-size: 12px; font-weight: 600; }
+      .chip.selected { background: var(--primary); color: var(--on-primary); }
+      .chip.success { background: var(--success-bg); color: var(--success); }
+      .chip.warning { background: var(--warning-bg); color: var(--warning); }
+      .chip.danger { background: var(--danger-bg); color: var(--danger); }
+      .chip.info { background: var(--info-bg); color: var(--info); }
+      .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+      .kpi { min-height: 132px; padding: 16px; border-radius: 16px; background: var(--surface-low); display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
+      .kpi-label { color: var(--text-secondary); font-size: 12px; }
+      .kpi-value { font-size: 26px; line-height: 32px; font-weight: 700; letter-spacing: -.03em; }
+      .kpi-note { color: var(--text-secondary); font-size: 11px; }
+      .status-list { display: grid; gap: 8px; }
+      .status-row { padding: 10px 12px; border-radius: 10px; background: var(--surface-low); display: flex; align-items: center; gap: 10px; }
+      .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--success); }
+      .status-row p { flex: 1; color: var(--text); font-size: 13px; }
+      .status-row small { color: var(--text-secondary); }
+      .guidelines { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+      .guideline { padding: 14px; border-radius: 12px; background: var(--surface-low); }
+      .guideline p { margin-top: 5px; font-size: 12px; }
+      footer { padding: 6px 2px 22px; color: var(--text-secondary); font-size: 12px; }
+      @media (max-width: 760px) {
+        .layout { grid-template-columns: 1fr; padding: 22px 14px 48px; gap: 14px; }
+        aside { position: static; display: flex; overflow: auto; gap: 4px; padding-bottom: 4px; }
+        aside a { flex: none; background: var(--surface); }
+        .topbar-inner { padding-inline: 16px; }
+        .section { padding: 17px; }
+        .swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      @media (max-width: 360px) { .swatches { grid-template-columns: 1fr; } .section-head { display: block; } }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand"><span class="brand-mark" aria-hidden="true">⌂</span><span><small>EstateFlow</small>UI Style Guide</span></div>
+        <button class="theme-button" id="theme-toggle" type="button" aria-pressed="false">Switch to dark theme</button>
+      </div>
+    </header>
+    <div class="layout">
+      <aside aria-label="Style guide sections">
+        <a href="#principles">Principles</a><a href="#colors">Colors</a><a href="#type">Typography</a>
+        <a href="#layout">Spacing & shape</a><a href="#controls">Controls</a><a href="#components">Components</a>
+        <a href="#states">States</a><a href="#accessibility">Accessibility</a>
+      </aside>
+      <main>
+        <section class="hero" id="principles">
+          <p class="eyebrow">Product design system · v1</p>
+          <h1>Clear property decisions,<br />with less visual noise.</h1>
+          <p>This guide defines the shared visual language for the EstateFlow mobile app and web experience. It documents the green semantic theme, component states, responsive rules, and accessible interaction patterns.</p>
+        </section>
+        <section class="section" id="colors">
+          <div class="section-head"><div><h2>Color system</h2><p>Semantic tokens map to the app theme. Switch modes above to inspect the full palette.</p></div></div>
+          <div class="swatches" id="swatches"></div>
+        </section>
+        <section class="section" id="type">
+          <div class="section-head"><div><h2>Typography</h2><p>Native system typography keeps the interface familiar across platforms. Web uses the configured sans stack.</p></div></div>
+          <div class="type-list">
+            <div class="type-row"><span class="type-heading">Screen heading</span><small>24 / 32 · 600</small></div>
+            <div class="type-row"><span class="type-title">Section and card title</span><small>18 / 24 · 600</small></div>
+            <div class="type-row"><span class="type-label">Control and field label</span><small>14 / 20 · 600</small></div>
+            <div class="type-row"><span class="type-body">Body text for descriptions</span><small>14 / 22 · 400</small></div>
+            <div class="type-row"><span class="type-small">Secondary details and helper text</span><small>12 / 18 · 400</small></div>
+            <div class="type-row"><span class="type-overline">Compact category label</span><small>11 / 14 · 600</small></div>
+          </div>
+        </section>
+        <section class="section" id="layout">
+          <div class="section-head"><div><h2>Spacing and shape</h2><p>Use a compact 4 px rhythm with generous 16–24 px section spacing. Keep cards and controls consistently rounded.</p></div></div>
+          <div class="token-grid">
+            <div class="token-group" id="spacing-tokens"><h3>Spacing scale</h3></div>
+            <div class="token-group"><h3>Corner radius</h3><div class="radius-samples">
+              <div class="radius-sample" style="border-radius:8px">Small<small>8 px</small></div>
+              <div class="radius-sample" style="border-radius:12px">Medium<small>12 px</small></div>
+              <div class="radius-sample" style="border-radius:16px">Card<small>16 px</small></div>
+              <div class="radius-sample" style="border-radius:999px">Pill<small>999 px</small></div>
+            </div></div>
+          </div>
+        </section>
+        <section class="section" id="controls">
+          <div class="section-head"><div><h2>Controls</h2><p>Controls have clear labels and comfortable targets. The default input is borderless; focus and error are visible without the browser's default outline.</p></div></div>
+          <div class="demo-stack">
+            <div class="field-wrap"><label for="sample-search">Property search</label><input class="input" id="sample-search" placeholder="Search title, district, or reference" /></div>
+            <div class="demo-row"><button class="button" type="button">Primary action</button><button class="button secondary" type="button">Secondary</button><button class="button quiet" type="button">Quiet action</button><button class="button" type="button" disabled>Disabled</button></div>
+            <div class="chips"><button class="chip selected" aria-pressed="true">All properties · 24</button><button class="chip" aria-pressed="false">Available · 12</button><button class="chip" aria-pressed="false">On hold · 4</button></div>
+            <div class="field-wrap"><label for="error-sample">Validation example</label><input class="input field-error" id="error-sample" value="" aria-invalid="true" aria-describedby="sample-error" /><p class="help" id="sample-error" style="color:var(--danger)">Enter a valid search value.</p></div>
+          </div>
+        </section>
+        <section class="section" id="components">
+          <div class="section-head"><div><h2>Surface components</h2><p>Surface contrast groups content by importance. Add borders only when they improve separation or explain a control state.</p></div></div>
+          <div class="cards">
+            <article class="kpi"><span class="kpi-label">Available properties</span><strong class="kpi-value">12</strong><span class="kpi-note">Updated just now</span></article>
+            <article class="kpi"><span class="kpi-label">Portfolio value</span><strong class="kpi-value">₹3.4 Cr</strong><span class="kpi-note">Across active listings</span></article>
+            <article class="kpi"><span class="kpi-label">Shared links</span><strong class="kpi-value">8</strong><span class="kpi-note">2 expire this week</span></article>
+          </div>
+          <div class="chips" style="margin-top:16px"><span class="chip">Neutral</span><span class="chip info">Information</span><span class="chip success">Available</span><span class="chip warning">On hold</span><span class="chip danger">Expired</span></div>
+        </section>
+        <section class="section" id="states">
+          <div class="section-head"><div><h2>Component states</h2><p>Show state in text as well as color. Keep actions predictable and offer recovery when something fails.</p></div></div>
+          <div class="status-list">
+            <div class="status-row"><span class="dot"></span><p>Ready · data is available</p><small>Available</small></div>
+            <div class="status-row"><span class="dot" style="background:#b45309"></span><p>Pending · waiting for confirmation</p><small>On hold</small></div>
+            <div class="status-row"><span class="dot" style="background:var(--icon-muted)"></span><p>Loading · show progress and prevent duplicate actions</p><small>Loading</small></div>
+            <div class="status-row"><span class="dot" style="background:var(--danger)"></span><p>Error · explain the issue and offer retry if possible</p><button class="button secondary" type="button">Retry</button></div>
+            <div class="status-row"><span class="dot" style="background:var(--icon-muted)"></span><p>Empty · explain what to do next</p><small>No results</small></div>
+          </div>
+        </section>
+        <section class="section" id="accessibility">
+          <div class="section-head"><div><h2>Accessibility and responsive rules</h2><p>These rules apply to every screen and reusable component.</p></div></div>
+          <div class="guidelines">
+            <div class="guideline"><h3>Accessible controls</h3><p>Give controls a role, useful label, selected/disabled/busy state, and visible keyboard focus. Aim for 44 px touch targets.</p></div>
+            <div class="guideline"><h3>Color and text</h3><p>Maintain contrast in both themes. Never communicate status by color alone. Support larger text without clipping.</p></div>
+            <div class="guideline"><h3>Small screens</h3><p>Use flexible widths and vertical scrolling. Allow chip rows to scroll horizontally; prevent page-level horizontal overflow.</p></div>
+            <div class="guideline"><h3>Platform behavior</h3><p>Use native React Native controls and safe areas. Handle web focus and keyboard behavior where it differs from mobile.</p></div>
+            <div class="guideline"><h3>Component ownership</h3><p>Components receive typed data and callbacks. Screens own fetching, persistence, navigation, and feature rules.</p></div>
+            <div class="guideline"><h3>Source of truth</h3><p>App tokens live in <code>src/theme/tokens.ts</code>; component exports are listed in the core component registries.</p></div>
+          </div>
+        </section>
+        <footer>EstateFlow Design System · Standalone reference · Theme colors mirror <code>src/theme/tokens.ts</code></footer>
+      </main>
+    </div>
+    <script>
+      const palette = {
+        light: { text:'#0B1C30', textSecondary:'#45464D', background:'#F7FAF7', surface:'#FFFFFF', surfaceLow:'#F0F7F1', surfaceContainer:'#E8F5EA', surfaceHigh:'#D8EEDB', primary:'#16803C', primaryPressed:'#11632E', onPrimary:'#FFFFFF', accent:'#16803C', accentContainer:'#D8EEDB', onAccentContainer:'#14532D', border:'#C6C6CD', divider:'#E5E7EB', iconMuted:'#64748B', success:'#15803D', successContainer:'#DCFCE7', successText:'#166534', warning:'#B45309', warningContainer:'#FEF3C7', warningText:'#92400E', danger:'#BA1A1A', dangerContainer:'#FFDAD6', dangerText:'#93000A', info:'#15803D', infoContainer:'#DCFCE7', infoText:'#166534', neutralContainer:'#E8F5EA' },
+        dark: { text:'#F8FAFC', textSecondary:'#94A3B8', background:'#090E1A', surface:'#111827', surfaceLow:'#131D2E', surfaceContainer:'#172A20', surfaceHigh:'#20382A', primary:'#4ADE80', primaryPressed:'#86EFAC', onPrimary:'#FFFFFF', accent:'#4ADE80', accentContainer:'#183322', onAccentContainer:'#BBF7D0', border:'#1F2D42', divider:'#1F2D42', iconMuted:'#94A3B8', success:'#4ADE80', successContainer:'#123321', successText:'#BBF7D0', warning:'#FBBF24', warningContainer:'#3B2A0E', warningText:'#FDE68A', danger:'#F87171', dangerContainer:'#3C1D25', dangerText:'#FECACA', info:'#4ADE80', infoContainer:'#183322', infoText:'#BBF7D0', neutralContainer:'#172A20' }
+      };
+      const labels = ['text','textSecondary','background','surface','surfaceLow','surfaceContainer','surfaceHigh','primary','primaryPressed','onPrimary','accent','accentContainer','onAccentContainer','border','divider','iconMuted','success','successContainer','successText','warning','warningContainer','warningText','danger','dangerContainer','dangerText','info','infoContainer','infoText','neutralContainer'];
+      function drawSwatches(theme) {
+        document.querySelector('#swatches').innerHTML = labels.map(name => `<div class="swatch"><div class="swatch-color" style="background:${palette[theme][name]}"></div><div class="swatch-copy"><b>${name}</b><code>${palette[theme][name]}</code></div></div>`).join('');
+      }
+      const spacing = [['half',2],['one',4],['two',8],['three',16],['four',24],['five',32],['six',64]];
+      document.querySelector('#spacing-tokens').insertAdjacentHTML('beforeend', spacing.map(([name,size]) => `<div class="token-line"><span>Spacing.${name} · ${size}px</span><span class="space-sample" style="width:${size}px"></span></div>`).join(''));
+      const toggle = document.querySelector('#theme-toggle');
+      function setTheme(theme) { document.documentElement.dataset.theme = theme; toggle.textContent = theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'; toggle.setAttribute('aria-pressed', String(theme === 'dark')); drawSwatches(theme); }
+      const savedTheme = localStorage.getItem('estateflow-style-guide-theme');
+      setTheme(savedTheme === 'dark' ? 'dark' : 'light');
+      toggle.addEventListener('click', () => { const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('estateflow-style-guide-theme', next); setTheme(next); });
+      document.querySelectorAll('.chips button').forEach(button => button.addEventListener('click', () => { document.querySelectorAll('.chips button').forEach(chip => { chip.classList.remove('selected'); chip.setAttribute('aria-pressed','false'); }); button.classList.add('selected'); button.setAttribute('aria-pressed','true'); }));
+    </script>
+  </body>
+</html>

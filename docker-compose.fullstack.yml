@@ -1,0 +1,51 @@
+services:
+  minio:
+    ports:
+      - "0.0.0.0:9000:9000"
+
+  keycloak:
+    command:
+      - start-dev
+      - --import-realm
+      - --hostname=http://${HOST_LAN_IP:?Export HOST_LAN_IP as your host LAN IP}:8081
+    ports:
+      - "0.0.0.0:8081:8080"
+
+  fullstack:
+    build:
+      context: ..
+      dockerfile: broaker app/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: true
+      - path: ../broaker app/.env.local
+        required: true
+    environment:
+      RUN_MIGRATIONS: "true"
+      API_PORT: "8000"
+      EXPO_PORT: "8081"
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-broaker}:${POSTGRES_PASSWORD:-broaker-dev-password}@postgres:5432/${POSTGRES_DB:-broaker}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-broaker-dev-redis-password}@redis:6379/0
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_PUBLIC_ENDPOINT_URL: http://${HOST_LAN_IP:?Export HOST_LAN_IP as your host LAN IP}:9000
+      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-broaker-minio}
+      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-local-minio-password}
+      PUBLIC_API_BASE_URL: http://${HOST_LAN_IP:?Export HOST_LAN_IP as your host LAN IP}:8001
+      EXPO_PUBLIC_API_URL: http://${HOST_LAN_IP:?Export HOST_LAN_IP as your host LAN IP}:8001/api/v1
+      EXPO_PACKAGER_PROXY_URL: http://${HOST_LAN_IP:?Export HOST_LAN_IP as your host LAN IP}:8082
+      KEYCLOAK_ISSUER: http://${HOST_LAN_IP:?Export HOST_LAN_IP as your host LAN IP}:8081/realms/broaker-test
+      KEYCLOAK_JWKS_URL: http://keycloak:8080/realms/broaker-test/protocol/openid-connect/certs
+      KEYCLOAK_ADMIN_BASE_URL: http://keycloak:8080
+      CORS_ALLOWED_ORIGINS: "http://localhost:8082,http://${HOST_LAN_IP:?Export HOST_LAN_IP as your host LAN IP}:8082,http://localhost:5173,http://127.0.0.1:5173"
+    ports:
+      - "0.0.0.0:8001:8000"
+      - "0.0.0.0:8082:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+
