@@ -1,4 +1,4 @@
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LocalizedText as Text } from '@/i18n/LocalizedText';
 
 import { AppIcon, type AppIconName } from './icons';
@@ -10,6 +10,7 @@ export interface StatusChipProps {
   label: string;
   tone?: StatusTone;
   icon?: AppIconName;
+  loading?: boolean;
   size?: 'small' | 'medium';
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
@@ -19,6 +20,7 @@ export function StatusChip({
   label,
   tone = 'neutral',
   icon,
+  loading = false,
   size = 'small',
   style,
   accessibilityLabel,
@@ -30,14 +32,14 @@ export function StatusChip({
   return (
     <View
       accessibilityRole="text"
-      accessibilityLabel={translate(accessibilityLabel ?? label)}
+      accessibilityLabel={translate(accessibilityLabel ?? (loading ? `${label}, updating` : label))}
       style={[
         styles.container,
         size === 'medium' && styles.medium,
         { backgroundColor: colors.background },
         style,
       ]}>
-      {icon && <AppIcon name={icon} size={14} color={colors.icon} />}
+      {loading ? <ActivityIndicator accessibilityLabel="Updating property status" size="small" color={colors.icon} /> : icon ? <AppIcon name={icon} size={14} color={colors.icon} /> : null}
       <Text style={[styles.label, { color: colors.foreground }]} numberOfLines={1}>
         {localizedLabel}
       </Text>

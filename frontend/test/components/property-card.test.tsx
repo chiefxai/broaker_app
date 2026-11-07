@@ -34,6 +34,14 @@ describe('PropertyCard', () => {
     expect(getByText(property.title)).toBeTruthy();
   });
 
+  it('shows the active status chip with a loading indicator while the property is syncing', async () => {
+    const property = { ...propertyCardFixtures[0], status: { label: 'Active', tone: 'success' as const }, syncStatus: 'syncing' as const };
+    const { getByLabelText } = await renderWithProviders(<PropertyCard property={property} />);
+
+    expect(getByLabelText('Active, updating')).toBeTruthy();
+    expect(getByLabelText('Updating property status')).toBeTruthy();
+  });
+
   it('uses safe fallbacks for missing image, location, and price', async () => {
     const property = { ...propertyCardFixtures[1], priceInr: null };
     const { getByText, getByLabelText } = await renderWithProviders(<PropertyCard property={property} />);

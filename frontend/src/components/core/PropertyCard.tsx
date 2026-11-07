@@ -24,6 +24,7 @@ export interface PropertyCardItem {
   title: string;
   categoryLabel: string;
   status: { label: string; tone: StatusTone };
+  syncStatus?: 'synced' | 'pending' | 'syncing' | 'error';
   area?: AreaValue | null;
   location?: string | null;
   priceInr?: number | null;
@@ -147,7 +148,7 @@ function ReadyPropertyCard({
             </View>
           )}
           <View pointerEvents="none" style={styles.badges}>
-            <StatusChip label={property.status.label} tone={property.status.tone} />
+            <StatusChip label={property.status.label} tone={property.status.tone} loading={property.syncStatus === 'syncing'} />
             <StatusChip label={property.categoryLabel} tone="neutral" />
           </View>
           <View pointerEvents="none" style={[styles.photoCount, { backgroundColor: colors.imageScrim }]}>

@@ -11,4 +11,13 @@ describe('StatusChip', () => {
 
     expect(getByRole('text', { name: 'Available' })).toBeTruthy();
   });
+
+  it('keeps the status in a chip and announces its loading state', async () => {
+    const { getByLabelText } = await renderWithProviders(
+      <StatusChip label="Active" tone="success" loading />,
+    );
+
+    expect(getByLabelText('Active, updating')).toBeTruthy();
+    expect(getByLabelText('Updating property status')).toBeTruthy();
+  });
 });
