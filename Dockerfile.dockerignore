@@ -16,7 +16,7 @@
 .claude
 .vscode
 output
-test
-docs
+frontend/test
+frontend/docs
 backend/tests
 backend/keycloak

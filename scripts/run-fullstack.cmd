@@ -3,6 +3,7 @@ setlocal
 set "SCRIPT_DIR=%~dp0"
 for %%I in ("%SCRIPT_DIR%..") do set "APP_DIR=%%~fI"
 set "BACKEND_DIR=%APP_DIR%\backend"
+set "FRONTEND_DIR=%APP_DIR%\frontend"
 
 if not defined HOST_LAN_IP (
   for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Get-NetIPConfiguration ^| Where-Object { $_.IPv4DefaultGateway -and $_.IPv4Address } ^| Select-Object -First 1 -ExpandProperty IPv4Address ^| Select-Object -First 1 -ExpandProperty IPAddress"`) do set "HOST_LAN_IP=%%I"
@@ -19,8 +20,8 @@ if not exist "%BACKEND_DIR%\.env" (
   pause
   exit /b 1
 )
-if not exist "%APP_DIR%\.env.local" (
-  echo Frontend env file not found: "%APP_DIR%\.env.local"
+if not exist "%FRONTEND_DIR%\.env.local" (
+  echo Frontend env file not found: "%FRONTEND_DIR%\.env.local"
   pause
   exit /b 1
 )

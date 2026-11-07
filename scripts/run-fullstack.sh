@@ -4,6 +4,7 @@ set -euo pipefail
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 app_dir="$(cd -- "$script_dir/.." && pwd)"
 backend_dir="$app_dir/backend"
+frontend_dir="$app_dir/frontend"
 
 if [[ -z "${HOST_LAN_IP:-}" ]]; then
   if command -v ipconfig >/dev/null 2>&1; then
@@ -24,8 +25,8 @@ if [[ ! -f "$backend_dir/.env" ]]; then
   echo "Backend env file not found: $backend_dir/.env" >&2
   exit 1
 fi
-if [[ ! -f "$app_dir/.env.local" ]]; then
-  echo "Frontend env file not found: $app_dir/.env.local" >&2
+if [[ ! -f "$frontend_dir/.env.local" ]]; then
+  echo "Frontend env file not found: $frontend_dir/.env.local" >&2
   exit 1
 fi
 

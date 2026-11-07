@@ -2,10 +2,10 @@
 
 FROM node:22-bookworm-slim AS frontend-deps
 WORKDIR /app/frontend
-COPY ["package.json", "./package.json"]
-COPY ["package-lock.json", "./package-lock.json"]
+COPY ["frontend/package.json", "./package.json"]
+COPY ["frontend/package-lock.json", "./package-lock.json"]
 RUN npm ci
-COPY ["./", "./"]
+COPY ["frontend/", "./"]
 
 FROM python:3.12-slim AS backend-deps
 WORKDIR /src/backend

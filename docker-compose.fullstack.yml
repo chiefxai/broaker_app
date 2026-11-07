@@ -20,7 +20,7 @@ services:
     env_file:
       - path: .env
         required: true
-      - path: ../.env.local
+      - path: ../frontend/.env.local
         required: true
     environment:
       RUN_MIGRATIONS: "true"
