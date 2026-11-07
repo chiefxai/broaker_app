@@ -13,6 +13,19 @@ output/
 .claude/
 .vscode/
 
+# Python backend
+**/.env
+**/.env.*
+!**/.env.example
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+**/*.py[cod]
+**/.coverage
+**/htmlcov/
+**/*.egg-info/
+
 # Native
 .kotlin/
 *.orig.*

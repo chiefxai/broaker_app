@@ -53,7 +53,8 @@ Component and unit tests use Jest, `jest-expo`, and React Native Testing Library
 - `src/components/core/icons/` contains the typed cross-platform `AppIcon` catalog backed by Expo Symbols (SF Symbols on iOS and Material Symbols on Android/web).
 - `src/components/registry.ts` is the shared UI export registry, with category registries under `core/` and `src/registry.ts` exposing `Components`, `Icons`, and `Theme` namespaces for app-wide imports. For example, use `import { Components, Theme } from '@/registry'` or import named UI exports from `@/components`.
 - `src/theme/` owns the centralized light/dark color palettes, shared spacing/radius/typography tokens, status colors, and the persisted app-wide theme provider.
-- `src/api/` contains the shared Axios client and feature API modules. Follow the [frontend contract](</Users/sanjay/Documents/ChatGPT/broaker app backend/docs/api/frontend-api-contract.md>) and [OpenAPI schema](</Users/sanjay/Documents/ChatGPT/broaker app backend/docs/api/openapi.yaml>). Configure `EXPO_PUBLIC_API_URL` with the `/api/v1` prefix; `/health` is at the host root.
+- `src/api/` contains the shared Axios client and feature API modules. Follow the [frontend contract](backend/docs/api/frontend-api-contract.md) and [OpenAPI schema](backend/docs/api/openapi.yaml). Configure `EXPO_PUBLIC_API_URL` with the `/api/v1` prefix; `/health` is at the host root.
+- `backend/` contains the FastAPI service, Alembic migrations, API/database contracts, and local dependency stack.
 
 ## Connect to the local API
 
@@ -61,7 +62,7 @@ Copy `.env.example` to `.env.local` and run `npm run web:local`. The local web c
 
 Android emulators use `10.0.2.2` to reach host localhost services. A physical device needs host-reachable API, Keycloak and object-storage URLs, with matching server issuer and network configuration. The backend's default Docker ports bind to localhost and are not reachable from another device. Expo Go can run live mode with in-memory SQLite; persistent native SQLite with SQLCipher requires a development build.
 
-The local API and Keycloak must be running. Start them from the backend repository using its documented Docker Compose commands.
+The backend source, API documentation, and local Compose stack live in `backend/`. Use the full-stack launcher below to run them with the frontend.
 
 - `src/data/` contains the explicit mock/live mode switch, demo property fixtures, the SQLite schema/repository, and TanStack Query hooks for local property reads.
 - `src/utils/` contains shared pure helpers such as currency and area formatters.
@@ -78,7 +79,7 @@ The full-stack Compose overlay builds one image containing the Expo Go developme
 ./scripts/run-fullstack.sh
 ```
 
-On Windows, double-click `scripts\\run-fullstack.cmd` or run it from Command Prompt. Both scripts expect the backend repository beside this app, with its `.env`, and this app's `.env.local`. If LAN address detection fails, set `HOST_LAN_IP` to the machine's LAN IPv4 address and run the script again.
+On Windows, double-click `scripts\\run-fullstack.cmd` or run it from Command Prompt. Both scripts use `backend/.env` and the frontend `.env.local`. Copy `backend/.env.example` to `backend/.env` and `.env.example` to `.env.local` before the first launch. If LAN address detection fails, set `HOST_LAN_IP` to the machine's LAN IPv4 address and run the script again.
 
 Open the `exp://` URL printed by the script in Expo Go. The API is available on port 8001; Keycloak and MinIO use ports 8081 and 9000. The stack publishes these development services on all host interfaces, so use it on a trusted network.
 

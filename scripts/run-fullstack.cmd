@@ -2,8 +2,7 @@
 setlocal
 set "SCRIPT_DIR=%~dp0"
 for %%I in ("%SCRIPT_DIR%..") do set "APP_DIR=%%~fI"
-for %%I in ("%APP_DIR%..") do set "PARENT_DIR=%%~fI"
-set "BACKEND_DIR=%PARENT_DIR%\broaker app backend"
+set "BACKEND_DIR=%APP_DIR%\backend"
 
 if not defined HOST_LAN_IP (
   for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "Get-NetIPConfiguration ^| Where-Object { $_.IPv4DefaultGateway -and $_.IPv4Address } ^| Select-Object -First 1 -ExpandProperty IPv4Address ^| Select-Object -First 1 -ExpandProperty IPAddress"`) do set "HOST_LAN_IP=%%I"
@@ -32,8 +31,8 @@ if errorlevel 1 (
   exit /b 1
 )
 
-pushd "%BACKEND_DIR%"
-docker compose --env-file .env -p broaker-app-backend -f docker-compose.yml -f "%APP_DIR%\docker-compose.fullstack.yml" --profile testing up --build -d
+pushd "%APP_DIR%"
+docker compose --env-file "%BACKEND_DIR%\.env" -p broaker-app -f "%BACKEND_DIR%\docker-compose.yml" -f "%APP_DIR%\docker-compose.fullstack.yml" --profile testing up --build -d
 if errorlevel 1 (
   popd
   pause

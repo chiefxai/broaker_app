@@ -2,16 +2,16 @@
 
 FROM node:22-bookworm-slim AS frontend-deps
 WORKDIR /app/frontend
-COPY ["broaker app/package.json", "./package.json"]
-COPY ["broaker app/package-lock.json", "./package-lock.json"]
+COPY ["package.json", "./package.json"]
+COPY ["package-lock.json", "./package-lock.json"]
 RUN npm ci
-COPY ["broaker app/", "./"]
+COPY ["./", "./"]
 
 FROM python:3.12-slim AS backend-deps
 WORKDIR /src/backend
-COPY ["broaker app backend/pyproject.toml", "./pyproject.toml"]
-COPY ["broaker app backend/README.md", "./README.md"]
-COPY ["broaker app backend/app/", "./app/"]
+COPY ["backend/pyproject.toml", "./pyproject.toml"]
+COPY ["backend/README.md", "./README.md"]
+COPY ["backend/app/", "./app/"]
 RUN pip install --no-cache-dir --prefix=/install .
 
 FROM node:22-bookworm-slim AS node-runtime
@@ -32,10 +32,10 @@ COPY --from=node-runtime /usr/local/ /usr/local/
 COPY --from=backend-deps /install/ /usr/local/
 COPY --from=frontend-deps /app/frontend/ /app/frontend/
 
-COPY ["broaker app backend/app/", "/app/backend/app/"]
-COPY ["broaker app backend/migrations/", "/app/backend/migrations/"]
-COPY ["broaker app backend/alembic.ini", "/app/backend/alembic.ini"]
-COPY ["broaker app/scripts/fullstack-entrypoint.sh", "/usr/local/bin/fullstack-entrypoint"]
+COPY ["backend/app/", "/app/backend/app/"]
+COPY ["backend/migrations/", "/app/backend/migrations/"]
+COPY ["backend/alembic.ini", "/app/backend/alembic.ini"]
+COPY ["scripts/fullstack-entrypoint.sh", "/usr/local/bin/fullstack-entrypoint"]
 
 RUN chmod +x /usr/local/bin/fullstack-entrypoint \
     && mkdir -p /app/frontend/.expo /home/app/.npm \

@@ -3,8 +3,7 @@ set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 app_dir="$(cd -- "$script_dir/.." && pwd)"
-parent_dir="$(dirname -- "$app_dir")"
-backend_dir="$parent_dir/broaker app backend"
+backend_dir="$app_dir/backend"
 
 if [[ -z "${HOST_LAN_IP:-}" ]]; then
   if command -v ipconfig >/dev/null 2>&1; then
@@ -36,9 +35,9 @@ if ! command -v docker >/dev/null 2>&1; then
 fi
 
 export HOST_LAN_IP
-cd "$backend_dir"
-docker compose --env-file .env -p broaker-app-backend \
-  -f docker-compose.yml \
+cd "$app_dir"
+docker compose --env-file "$backend_dir/.env" -p broaker-app \
+  -f "$backend_dir/docker-compose.yml" \
   -f "$app_dir/docker-compose.fullstack.yml" \
   --profile testing up --build -d
 

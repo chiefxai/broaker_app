@@ -1,0 +1,61 @@
+{
+  "realm": "broaker-test",
+  "enabled": true,
+  "displayName": "Broaker Local Test Realm",
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "clients": [
+    {
+      "clientId": "broaker-api",
+      "name": "Broaker API local test client",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "exp://172.20.10.5:8082/--/*",
+        "exp://172.20.10.5:8082/--/auth/callback",
+        "http://127.0.0.1:*",
+        "http://localhost:*",
+        "mobileapp:///auth/callback",
+        "mobileapp://auth/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173"
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "email",
+        "roles",
+        "basic"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "test-broker",
+      "enabled": true,
+      "email": "test-broker@example.com",
+      "emailVerified": true,
+      "firstName": "Test",
+      "lastName": "Broker",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "test-broker-password",
+          "temporary": false
+        }
+      ]
+    }
+  ],
+  "webAuthnPolicyPasswordlessPasskeysEnabled": true,
+  "webAuthnPolicyPasswordlessMediation": "conditional",
+  "webAuthnPolicyPasswordlessRpEntityName": "Broaker"
+}

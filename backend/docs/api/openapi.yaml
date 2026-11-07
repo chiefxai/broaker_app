@@ -1,0 +1,1600 @@
+openapi: 3.1.0
+info:
+  title: Broaker API
+  version: 1.0.0-draft
+  description: >-
+    Frontend API contract. Solo-broker MVP endpoints are implemented. Team access remains deferred.
+    Responses include X-Content-Type-Options: nosniff, X-Frame-Options: DENY,
+    Referrer-Policy: strict-origin-when-cross-origin, and a restrictive
+    Permissions-Policy.
+servers:
+  - url: https://{api-host}/api/v1
+    description: API base path
+    variables:
+      api-host:
+        default: api.example.com
+security:
+  - BearerAccessToken: []
+tags:
+  - name: Auth
+  - name: Profile
+  - name: Properties
+  - name: Signing Authorities
+  - name: Documents
+  - name: Sharing
+  - name: Reference
+  - name: Dashboard
+paths:
+  /health:
+    get:
+      security: []
+      servers:
+        - url: https://{api-host}
+          variables:
+            api-host:
+              default: api.example.com
+      tags: [Auth]
+      summary: Liveness check (implemented)
+      responses:
+        "200":
+          description: Service process is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, const: ok }
+                required: [status]
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a local password account (implemented)
+      description: >-
+        Public local-development route. Available only when AUTH_PROVIDER=password
+        and ENVIRONMENT is local, development, or test. Passwords are stored as
+        Argon2id hashes. Production deployments must use a managed identity provider.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegistrationRequest" }
+      responses:
+        "201":
+          description: Account created and signed in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthTokenResponse" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Sign in to a local password account (implemented)
+      description: >-
+        Public local-development route. Available only when AUTH_PROVIDER=password
+        and ENVIRONMENT is local, development, or test. Returns a short-lived
+        bearer access token.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Account authenticated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthTokenResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get the authenticated identity (implemented)
+      responses:
+        "200":
+          description: Current authenticated identity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUser"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /uploads/presign:
+    post:
+      tags: [Documents]
+      summary: Create a direct object-storage upload URL (implemented)
+      description: >-
+        URL is short lived and scoped under the authenticated authenticated subject.
+        Upload the bytes with PUT and the returned Content-Type. Supports PDF, JPEG, PNG,
+        WebP, and voice audio in M4A, AAC, MP3, WAV, or WebM formats. The API does not
+        register a document record yet.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresignUploadRequest"
+      responses:
+        "200":
+          description: Presigned upload details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresignUploadResponse"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /profile/broker:
+    get:
+      tags: [Profile]
+      summary: Get current broker profile (implemented)
+      responses:
+        "200":
+          description: Current broker profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BrokerProfile" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    put:
+      tags: [Profile]
+      summary: Create or replace current broker profile (implemented)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BrokerProfileInput" }
+      responses:
+        "200":
+          description: Saved broker profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BrokerProfile" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    patch:
+      tags: [Profile]
+      summary: Update selected broker profile fields (implemented)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BrokerProfilePatch" }
+      responses:
+        "200":
+          description: Updated broker profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BrokerProfile" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /profile/business:
+    get:
+      tags: [Profile]
+      summary: Get current business profile (implemented)
+      responses:
+        "200":
+          description: Current business profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessProfile" }
+    put:
+      tags: [Profile]
+      summary: Create or replace business profile (implemented)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BusinessProfileInput" }
+      responses:
+        "200":
+          description: Saved business profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessProfile" }
+    patch:
+      tags: [Profile]
+      summary: Update selected business profile fields (implemented)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BusinessProfilePatch" }
+      responses:
+        "200":
+          description: Updated business profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessProfile" }
+  /profile/preferences:
+    get:
+      tags: [Profile]
+      summary: Read current user's preferences (implemented)
+      responses:
+        "200":
+          description: Preferences
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Preferences" }
+    patch:
+      tags: [Profile]
+      summary: Update current user's preferences (implemented)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PreferencesPatch" }
+      responses:
+        "200":
+          description: Updated preferences
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Preferences" }
+  /onboarding:
+    get:
+      tags: [Profile]
+      summary: Read onboarding progress (implemented)
+      responses:
+        "200":
+          description: Onboarding status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OnboardingStatus" }
+    patch:
+      tags: [Profile]
+      summary: Save onboarding progress (implemented)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OnboardingPatch" }
+      responses:
+        "200":
+          description: Updated onboarding status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OnboardingStatus" }
+  /dashboard:
+    get:
+      tags: [Dashboard]
+      summary: Get dashboard data (implemented)
+      responses:
+        "200":
+          description: Dashboard metrics and recent properties
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Dashboard" }
+  /properties:
+    get:
+      tags: [Properties]
+      summary: Search and list properties (implemented)
+      parameters:
+        - { $ref: "#/components/parameters/Q" }
+        - { $ref: "#/components/parameters/Category" }
+        - { $ref: "#/components/parameters/PropertyStatus" }
+        - { $ref: "#/components/parameters/District" }
+        - { $ref: "#/components/parameters/PriceMin" }
+        - { $ref: "#/components/parameters/PriceMax" }
+        - { $ref: "#/components/parameters/AreaMin" }
+        - { $ref: "#/components/parameters/AreaMax" }
+        - { $ref: "#/components/parameters/AreaUnit" }
+        - { $ref: "#/components/parameters/Sort" }
+        - { $ref: "#/components/parameters/Limit" }
+        - { $ref: "#/components/parameters/Offset" }
+      responses:
+        "200":
+          description: Property page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PropertyPage" }
+    post:
+      tags: [Properties]
+      summary: Create a draft property (implemented)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PropertyCreate" }
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PropertySummary" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /properties/{property_id}:
+    parameters:
+      - { $ref: "#/components/parameters/PropertyId" }
+    get:
+      tags: [Properties]
+      summary: Get a property and saved sections (implemented)
+      responses:
+        "200":
+          description: Property details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Property" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [Properties]
+      summary: Partially update core property fields (implemented)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PropertyPatch" }
+      responses:
+        "200":
+          description: Updated property
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Property" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [Properties]
+      summary: Delete an unpublished draft (implemented)
+      responses:
+        "204": { description: Draft deleted }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /properties/{property_id}/publish:
+    post:
+      tags: [Properties]
+      summary: Publish a complete property (implemented)
+      parameters:
+        - { $ref: "#/components/parameters/PropertyId" }
+      responses:
+        "200":
+          description: Published property
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Property" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /properties/{property_id}/archive:
+    post:
+      tags: [Properties]
+      summary: Archive a property (implemented)
+      parameters:
+        - { $ref: "#/components/parameters/PropertyId" }
+      responses:
+        "200":
+          description: Archived property
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Property" }
+  /properties/{property_id}/location:
+    put:
+      tags: [Properties]
+      summary: Replace location section (implemented)
+      parameters:
+        - { $ref: "#/components/parameters/PropertyId" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Location" }
+      responses:
+        "200":
+          description: Saved location section
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Location" }
+  /properties/{property_id}/features:
+    put:
+      tags: [Properties]
+      summary: Replace agronomy and utilities section (implemented)
+      parameters:
+        - { $ref: "#/components/parameters/PropertyId" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PropertyFeatures" }
+      responses:
+        "200":
+          description: Saved features section
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PropertyFeatures" }
+  /properties/{property_id}/financials:
+    put:
+      tags: [Properties]
+      summary: Replace financials section (implemented)
+      parameters:
+        - { $ref: "#/components/parameters/PropertyId" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Financials" }
+      responses:
+        "200":
+          description: Saved financials section
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Financials" }
+  /properties/{property_id}/legal:
+    put:
+      tags: [Properties]
+      summary: Replace legal section (implemented)
+      parameters:
+        - { $ref: "#/components/parameters/PropertyId" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LegalDetails" }
+      responses:
+        "200":
+          description: Saved legal section
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LegalDetails" }
+  /properties/{property_id}/notes:
+    get:
+      tags: [Properties]
+      summary: Read private property notes (implemented)
+      parameters:
+        - { $ref: "#/components/parameters/PropertyId" }
+      responses:
+        "200":
+          description: Private notes
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PrivateNotes" }
+    put:
+      tags: [Properties]
+      summary: Replace private property notes (implemented)
+      parameters:
+        - { $ref: "#/components/parameters/PropertyId" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PrivateNotes" }
+      responses:
+        "200":
+          description: Saved private notes
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PrivateNotes" }
+  /properties/{property_id}/documents:
+    get:
+      tags: [Documents]
+      summary: List property documents and media (implemented)
+      parameters:
+        - { $ref: "#/components/parameters/PropertyId" }
+      responses:
+        "200":
+          description: Property documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Document" }
+    post:
+      tags: [Documents]
+      summary: Register and verify a successfully uploaded object (implemented)
+      description: >-
+        The API checks property ownership and caller-scoped object key, then verifies positive
+        object size up to S3_MAX_UPLOAD_BYTES (default 25 MiB), exact stored Content-Type, and
+        the PDF/JPEG/PNG/WebP or supported audio signature before saving upload_status as
+        uploaded. Voice memo documents must remain private and are excluded from public shares.
+        This confirms storage integrity and readiness for use; it does not certify legal validity.
+      parameters:
+        - { $ref: "#/components/parameters/PropertyId" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DocumentCreate" }
+      responses:
+        "201":
+          description: Storage-verified document ready for legal review
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Document" }
+        "403": { description: Object key is outside the caller and property scope }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "503": { description: Object storage could not verify the uploaded object }
+  /properties/{property_id}/signing-authorities:
+    get:
+      tags: [Signing Authorities]
+      summary: List signing authorities for an owned property (implemented)
+      parameters:
+        - { $ref: "#/components/parameters/PropertyId" }
+      responses:
+        "200":
+          description: Signing authorities ordered by creation time
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SigningAuthorities" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      tags: [Signing Authorities]
+      summary: Replace signing authorities for an owned property (implemented)
+      description: >-
+        Replaces the complete set atomically. At most six records are allowed.
+        Verification and signature states are server-controlled and remain pending;
+        this API does not verify identity, authority, or signatures.
+      parameters:
+        - { $ref: "#/components/parameters/PropertyId" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SigningAuthoritiesUpdate" }
+      responses:
+        "200":
+          description: Saved signing-authority records
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SigningAuthorities" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /properties/{property_id}/uploads/presign:
+    post:
+      tags: [Documents]
+      summary: Create property-scoped upload URL (implemented)
+      description: >-
+        Generates a short-lived upload URL scoped to the authenticated caller and property.
+        The client PUTs raw bytes directly to object storage with the returned exact Content-Type.
+        Property registration enforces S3_MAX_UPLOAD_BYTES (default 25 MiB) and checks the file
+        signature before recording it. Audio uploads support M4A, AAC, MP3, WAV, and WebM.
+      parameters:
+        - { $ref: "#/components/parameters/PropertyId" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PresignUploadRequest" }
+      responses:
+        "200":
+          description: Presigned upload details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PresignUploadResponse" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { description: Object storage is unavailable or not configured }
+  /properties/{property_id}/share-links:
+    get:
+      tags: [Sharing]
+      summary: List property share links (implemented)
+      parameters:
+        - { $ref: "#/components/parameters/PropertyId" }
+        - { $ref: "#/components/parameters/Limit" }
+        - { $ref: "#/components/parameters/Offset" }
+      responses:
+        "200":
+          description: Paginated share links, newest first
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ShareLinkPage" }
+    post:
+      tags: [Sharing]
+      summary: Create a property share link (implemented)
+      parameters:
+        - { $ref: "#/components/parameters/PropertyId" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ShareLinkCreate" }
+      responses:
+        "201":
+          description: Share link created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ShareLink" }
+  /share-links/{share_link_id}:
+    parameters:
+      - name: share_link_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Sharing]
+      summary: Get share link settings (implemented)
+      responses:
+        "200":
+          description: Share link settings
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ShareLink" }
+    patch:
+      tags: [Sharing]
+      summary: Update share link settings (implemented)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ShareLinkPatch" }
+      responses:
+        "200":
+          description: Updated share link
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ShareLink" }
+    delete:
+      tags: [Sharing]
+      summary: Revoke share link (implemented)
+      responses:
+        "204": { description: Link revoked }
+  /public/listings/{token}:
+    get:
+      security: []
+      tags: [Sharing]
+      summary: Get public listing through a share token (implemented)
+      description: Unlisted links are available to anyone with the URL; protected links require only their passcode. Private links require a Bearer access token and are visible only to the owning account.
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string, minLength: 32 }
+        - name: X-Share-Passcode
+          in: header
+          required: false
+          schema: { type: string, minLength: 6, maxLength: 12, pattern: '^[0-9]+$' }
+        - name: Authorization
+          in: header
+          required: false
+          description: Optional Bearer access token; required only for private links and must belong to the property owner.
+          schema: { type: string }
+      responses:
+        "200":
+          description: Allowlisted public listing view
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicListing" }
+        "401": { description: Protected listing requires its passcode, or private listing requires owner sign-in }
+        "429": { description: Too many incorrect passcode attempts }
+        "503": { description: Passcode verification is temporarily unavailable }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /public/listings/{token}/documents/{document_id}:
+    get:
+      security: []
+      tags: [Sharing]
+      summary: Stream an allowlisted public document through a share token (implemented)
+      description: Unlisted links are available to anyone with the URL; protected links require only their passcode. Private links require a Bearer access token belonging to the property owner. Revalidates token expiry, revocation, property ownership, document visibility, and per-link category permissions on every request. Public listing responses use this route instead of object-storage URLs.
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string, minLength: 32 }
+        - name: document_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: X-Share-Passcode
+          in: header
+          required: false
+          schema: { type: string, minLength: 6, maxLength: 12, pattern: '^[0-9]+$' }
+        - name: Authorization
+          in: header
+          required: false
+          description: Optional Bearer access token; required only for private links and must belong to the property owner.
+          schema: { type: string }
+      responses:
+        "200":
+          description: Document bytes
+          content:
+            application/octet-stream: {}
+            image/jpeg: {}
+            image/png: {}
+            image/webp: {}
+            application/pdf: {}
+        "401": { description: Protected listing requires its passcode, or private listing requires owner sign-in }
+        "429": { description: Too many incorrect passcode attempts }
+        "503": { description: Passcode verification is temporarily unavailable }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /profile/share-links:
+    get:
+      tags: [Sharing]
+      summary: List broker profile and portfolio share links (implemented)
+      parameters:
+        - { $ref: "#/components/parameters/Limit" }
+        - { $ref: "#/components/parameters/Offset" }
+      responses:
+        "200":
+          description: Paginated profile share links
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProfileShareLinkPage" }
+    post:
+      tags: [Sharing]
+      summary: Create broker profile and portfolio share link (implemented)
+      description: At least one include flag is required; profile and active-property data are allowlisted.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProfileShareLinkCreate" }
+      responses:
+        "201":
+          description: Created profile share link
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProfileShareLink" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /profile/share-links/{share_link_id}:
+    patch:
+      tags: [Sharing]
+      summary: Update broker profile and portfolio share link (implemented)
+      parameters:
+        - name: share_link_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProfileShareLinkPatch" }
+      responses:
+        "200":
+          description: Updated profile share link
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProfileShareLink" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [Sharing]
+      summary: Revoke broker profile share link (implemented)
+      parameters:
+        - name: share_link_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: Link revoked }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /public/profiles/{token}:
+    get:
+      tags: [Sharing]
+      summary: Read a shared broker profile and portfolio (implemented)
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+        - name: X-Share-Passcode
+          in: header
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: Allowlisted profile and active portfolio data
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicProfileShare" }
+        "401": { description: Protected link requires the correct passcode }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /documents/{document_id}/download-url:
+    get:
+      tags: [Documents]
+      summary: Create temporary authorized download URL (implemented)
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Temporary URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  download_url: { type: string, format: uri }
+                  expires_in: { type: integer }
+                required: [download_url, expires_in]
+  /documents/{document_id}:
+    parameters:
+      - name: document_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      tags: [Documents]
+      summary: Update document metadata or visibility (implemented)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                display_name: { type: [string, "null"], maxLength: 255 }
+                category: { type: string, enum: [photo, title_deed, survey, soil_report, voice_memo, other] }
+                visibility: { type: string, enum: [private, shared, public] }
+              minProperties: 1
+      responses:
+        "200":
+          description: Updated document
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Document" }
+    delete:
+      tags: [Documents]
+      summary: Delete document metadata and stored object (implemented)
+      responses:
+        "204": { description: Document deleted }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /property-categories:
+    get:
+      tags: [Reference]
+      summary: List enabled property categories (implemented)
+      responses:
+        "200":
+          description: Available property categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PropertyCategoryRead" }
+  /profile/preferences/property-categories:
+    put:
+      tags: [Profile]
+      summary: Replace enabled property categories and order (implemented)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserPropertyCategoriesUpdate" }
+      responses:
+        "200":
+          description: Saved per-user category settings
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PropertyCategoryRead" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /reference/soil-types:
+    get:
+      tags: [Reference]
+      summary: List soil type options (implemented)
+      security: []
+      responses:
+        "200":
+          description: Soil types
+          content:
+            application/json:
+              schema: { type: array, items: { type: string } }
+  /reference/measurement-units:
+    get:
+      tags: [Reference]
+      summary: List land measurement units (implemented)
+      security: []
+      responses:
+        "200":
+          description: Measurement units
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code: { type: string }
+                    label: { type: string }
+                  required: [code, label]
+  /reference/title-classifications:
+    get:
+      tags: [Reference]
+      summary: List legal title classifications (implemented)
+      security: []
+      responses:
+        "200":
+          description: Title classifications
+          content:
+            application/json:
+              schema: { type: array, items: { type: string } }
+  /reference/access-types:
+    get:
+      tags: [Reference]
+      summary: List road and access options (implemented)
+      security: []
+      responses:
+        "200":
+          description: Access options
+          content:
+            application/json:
+              schema: { type: array, items: { type: string } }
+components:
+  securitySchemes:
+    BearerAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token from the configured authentication provider.
+  parameters:
+    PropertyId:
+      name: property_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Q:
+      name: q
+      in: query
+      required: false
+      schema: { type: string, maxLength: 200 }
+    Category:
+      name: category
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/PropertyCategory" }
+    PropertyStatus:
+      name: status
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/PropertyStatus" }
+    District:
+      name: district
+      in: query
+      required: false
+      schema: { type: string, maxLength: 100 }
+    PriceMin:
+      name: price_min
+      in: query
+      schema: { type: integer, minimum: 0 }
+    PriceMax:
+      name: price_max
+      in: query
+      schema: { type: integer, minimum: 0 }
+    AreaMin:
+      name: area_min
+      in: query
+      schema: { type: number, exclusiveMinimum: 0 }
+    AreaMax:
+      name: area_max
+      in: query
+      schema: { type: number, exclusiveMinimum: 0 }
+    AreaUnit:
+      name: area_unit
+      in: query
+      schema: { type: string }
+    Sort:
+      name: sort
+      in: query
+      schema:
+        type: string
+        enum: [created_at, updated_at, asking_price_inr, area]
+        default: updated_at
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema: { type: integer, minimum: 0, default: 0 }
+  responses:
+    Unauthorized:
+      description: Missing, invalid, or expired access token from the configured provider
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Resource not found or not visible
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Conflict:
+      description: Resource is not in a state that permits this action
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    ServiceUnavailable:
+      description: A required configured service is unavailable
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+  schemas:
+    Error:
+      type: object
+      properties:
+        detail: {}
+      required: [detail]
+    ProfileShareLinkCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        include_profile: { type: boolean, default: true }
+        include_properties: { type: boolean, default: true }
+        property_ids:
+          type: [array, "null"]
+          minItems: 2
+          uniqueItems: true
+          description: Explicit active property UUIDs to bundle into this link. Omit to retain legacy behavior and include every active property.
+          items: { type: string, format: uuid }
+        property_disclosures:
+          type: object
+          description: Per-property full disclosure overrides keyed by active property UUID; omitted properties use owner defaults.
+          additionalProperties: { $ref: "#/components/schemas/ShareDisclosures" }
+        visibility: { type: string, enum: [unlisted, protected], default: unlisted }
+        passcode: { type: [string, "null"], minLength: 6, maxLength: 12, pattern: '^[0-9]+$', writeOnly: true }
+        expires_at: { type: [string, "null"], format: date-time }
+      required: [title]
+    ProfileShareLinkPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        title: { type: [string, "null"], minLength: 1, maxLength: 200 }
+        include_profile: { type: [boolean, "null"] }
+        include_properties: { type: [boolean, "null"] }
+        property_ids:
+          type: [array, "null"]
+          minItems: 2
+          uniqueItems: true
+          description: Replace the selected active property group. Omit to preserve the current selection.
+          items: { type: string, format: uuid }
+        property_disclosures:
+          type: [object, "null"]
+          description: Replace per-property disclosure overrides; keys must be active properties owned by the broker.
+          additionalProperties: { $ref: "#/components/schemas/ShareDisclosures" }
+        visibility: { type: [string, "null"], enum: [protected, unlisted, null] }
+        passcode: { type: [string, "null"], minLength: 6, maxLength: 12, pattern: '^[0-9]+$', writeOnly: true }
+        expires_at: { type: [string, "null"], format: date-time }
+    ProfileShareLink:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        include_profile: { type: boolean }
+        include_properties: { type: boolean }
+        property_ids:
+          type: [array, "null"]
+          items: { type: string, format: uuid }
+        property_disclosures:
+          type: object
+          additionalProperties: { $ref: "#/components/schemas/ShareDisclosures" }
+        visibility: { type: string, enum: [unlisted, protected] }
+        public_url: { type: [string, "null"], format: uri }
+        expires_at: { type: [string, "null"], format: date-time }
+        revoked_at: { type: [string, "null"], format: date-time }
+        created_at: { type: string, format: date-time }
+      required: [id, title, include_profile, include_properties, property_disclosures, visibility, public_url, expires_at, revoked_at, created_at]
+    ProfileShareLinkPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ProfileShareLink" } }
+        limit: { type: integer, minimum: 1, maximum: 100 }
+        offset: { type: integer, minimum: 0 }
+        total: { type: integer, minimum: 0 }
+      required: [items, limit, offset, total]
+    PublicProfileShare:
+      type: object
+      properties:
+        profile:
+          oneOf:
+            - { $ref: "#/components/schemas/PublicBrokerProfile" }
+            - { type: "null" }
+        properties:
+          type: [array, "null"]
+          items: { $ref: "#/components/schemas/PublicProfileProperty" }
+    PublicBrokerProfile:
+      type: object
+      properties:
+        business_name: { type: [string, "null"] }
+        professional_title: { type: [string, "null"] }
+        public_phone: { type: [string, "null"] }
+        public_email: { type: [string, "null"], format: email }
+        city: { type: [string, "null"] }
+        district: { type: [string, "null"] }
+        state: { type: [string, "null"] }
+    PublicProfileProperty:
+      type: object
+      properties:
+        public_listing_token: { type: string, description: "Opaque token bound to this profile share and active property; pass it to GET /public/listings/{token}" }
+        title: { type: string }
+        description: { type: [string, "null"] }
+        category: { type: string }
+        asking_price_inr: { type: [integer, "null"], minimum: 0 }
+        area: { type: [number, "null"], exclusiveMinimum: 0 }
+        area_unit: { type: [string, "null"] }
+        approximate_location: { type: [string, "null"] }
+      required: [public_listing_token, title, category]
+    RegistrationRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        full_name: { type: string, minLength: 2, maxLength: 120 }
+        email: { type: string, format: email }
+        phone_number: { type: string, minLength: 7, maxLength: 32 }
+        password: { type: string, minLength: 12, maxLength: 128, writeOnly: true }
+      required: [full_name, email, phone_number, password]
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 1, maxLength: 128, writeOnly: true }
+      required: [email, password]
+    AuthTokenResponse:
+      type: object
+      properties:
+        access_token: { type: string, writeOnly: true }
+        token_type: { type: string, const: bearer }
+        expires_in: { type: integer, minimum: 300, maximum: 86400 }
+      required: [access_token, token_type, expires_in]
+    CurrentUser:
+      type: object
+      properties:
+        sub: { type: string }
+        username: { type: [string, "null"] }
+        scope: { type: string }
+      required: [sub, scope]
+    PresignUploadRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        filename: { type: string, minLength: 1, maxLength: 255 }
+        content_type:
+          type: string
+          enum: [application/pdf, image/jpeg, image/png, image/webp, audio/mp4, audio/aac, audio/mpeg, audio/wav, audio/webm]
+      required: [filename, content_type]
+    PresignUploadResponse:
+      type: object
+      properties:
+        upload_url: { type: string, format: uri }
+        object_key: { type: string }
+        method: { type: string, const: PUT }
+        expires_in: { type: integer, minimum: 1, maximum: 604800 }
+        content_type: { type: string }
+      required: [upload_url, object_key, method, expires_in, content_type]
+    PropertyCategory:
+      type: string
+      enum: [agriculture, plots, house_villa, commercial, apartment]
+    PropertyCategoryRead:
+      type: object
+      properties:
+        code: { $ref: "#/components/schemas/PropertyCategory" }
+        label: { type: string, minLength: 1, maxLength: 100 }
+        sort_order: { type: integer, minimum: 0 }
+        enabled: { type: boolean, default: true }
+      required: [code, label, sort_order, enabled]
+    UserPropertyCategoryInput:
+      type: object
+      additionalProperties: false
+      properties:
+        code: { $ref: "#/components/schemas/PropertyCategory" }
+        enabled: { type: boolean }
+        sort_order: { type: integer, minimum: 0 }
+      required: [code, enabled, sort_order]
+    UserPropertyCategoriesUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items: { $ref: "#/components/schemas/UserPropertyCategoryInput" }
+      required: [items]
+    PropertyStatus:
+      type: string
+      enum: [draft, active, archived]
+    PropertyCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        category: { $ref: "#/components/schemas/PropertyCategory" }
+      required: [title, category]
+    PropertyPatch:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, "null"], maxLength: 10000 }
+        category: { $ref: "#/components/schemas/PropertyCategory" }
+    PropertySummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        category: { $ref: "#/components/schemas/PropertyCategory" }
+        status: { $ref: "#/components/schemas/PropertyStatus" }
+        completion_percent: { type: integer, minimum: 0, maximum: 100 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+      required: [id, title, category, status, completion_percent, created_at, updated_at]
+    PropertyPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/PropertySummary" }
+        limit: { type: integer }
+        offset: { type: integer }
+        total: { type: integer }
+      required: [items, limit, offset, total]
+    Property:
+      allOf:
+        - { $ref: "#/components/schemas/PropertySummary" }
+        - type: object
+          properties:
+            description: { type: [string, "null"] }
+            location: { oneOf: [{ $ref: "#/components/schemas/Location" }, { type: "null" }] }
+            features: { oneOf: [{ $ref: "#/components/schemas/PropertyFeatures" }, { type: "null" }] }
+            financials: { oneOf: [{ $ref: "#/components/schemas/Financials" }, { type: "null" }] }
+            legal: { oneOf: [{ $ref: "#/components/schemas/LegalDetails" }, { type: "null" }] }
+    Location:
+      type: object
+      properties:
+        address_line: { type: [string, "null"], maxLength: 500 }
+        village: { type: [string, "null"], maxLength: 150 }
+        pincode: { type: [string, "null"], maxLength: 20 }
+        taluk: { type: [string, "null"], maxLength: 100 }
+        district: { type: [string, "null"], maxLength: 100 }
+        state: { type: [string, "null"], maxLength: 100 }
+        country_code: { type: [string, "null"], minLength: 2, maxLength: 2 }
+        survey_numbers:
+          type: array
+          items: { type: string, maxLength: 100 }
+        latitude: { type: [number, "null"], minimum: -90, maximum: 90 }
+        longitude: { type: [number, "null"], minimum: -180, maximum: 180 }
+        width_ft: { type: [number, "null"], exclusiveMinimum: 0 }
+        length_ft: { type: [number, "null"], exclusiveMinimum: 0 }
+        frontage_direction: { type: [string, "null"] }
+        road_width_ft: { type: [number, "null"], minimum: 0 }
+        road_access_type: { type: [string, "null"], maxLength: 80 }
+        road_subdivision_basis: { type: [string, "null"], maxLength: 200 }
+        highway_distance_km: { type: [number, "null"], minimum: 0 }
+    PropertyFeatures:
+      type: object
+      properties:
+        soil_type:
+          type: [string, "null"]
+          enum: [red, black, alluvial, sandy_loam, other, null]
+        soil_type_other: { type: [string, "null"], maxLength: 120 }
+        water_tds_ppm: { type: [integer, "null"], minimum: 0 }
+        water_sources:
+          type: array
+          maxItems: 50
+          items: { $ref: "#/components/schemas/WaterSourceInput" }
+        utilities:
+          type: array
+          maxItems: 50
+          items: { $ref: "#/components/schemas/UtilityInput" }
+        agronomist_notes: { type: [string, "null"], maxLength: 5000 }
+    WaterSourceInput:
+      type: object
+      properties:
+        source_type:
+          type: string
+          enum: [river, canal, borewell, open_well, government_supply, other]
+        label: { type: [string, "null"], maxLength: 160 }
+        depth_ft: { type: [number, "null"], minimum: 0 }
+        diameter_ft: { type: [number, "null"], minimum: 0 }
+        yield_inches: { type: [number, "null"], minimum: 0 }
+        seasonality: { type: [string, "null"], maxLength: 200 }
+        details: { type: [string, "null"], maxLength: 5000 }
+      required: [source_type]
+    UtilityInput:
+      type: object
+      properties:
+        utility_type:
+          type: string
+          enum: [electricity, irrigation, fencing, road_access, other]
+        available: { type: boolean }
+        details: { type: [string, "null"], maxLength: 5000 }
+      required: [utility_type, available]
+    Financials:
+      type: object
+      properties:
+        currency: { type: string, const: INR }
+        asking_price_inr: { type: [integer, "null"], minimum: 0 }
+        minimum_price_inr: { type: [integer, "null"], minimum: 0 }
+        area: { type: [number, "null"], exclusiveMinimum: 0 }
+        area_unit: { type: [string, "null"] }
+        negotiable: { type: [boolean, "null"] }
+        advance_amount_inr: { type: [integer, "null"], minimum: 0 }
+        outstanding_loan_inr: { type: [integer, "null"], minimum: 0 }
+        lending_bank: { type: [string, "null"], maxLength: 200 }
+    LegalDetails:
+      type: object
+      properties:
+        title_classification:
+          type: [string, "null"]
+          enum: [ryotwari_patta, natham, gramathu_natham, other, null]
+        legal_summary: { type: [string, "null"], maxLength: 10000 }
+    PrivateNotes:
+      type: object
+      properties:
+        notes: { type: [string, "null"], maxLength: 20000 }
+      required: [notes]
+    SigningAuthorityInput:
+      type: object
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200 }
+        phone: { type: [string, "null"], maxLength: 40 }
+        relationship: { type: string, minLength: 1, maxLength: 120 }
+        record_label: { type: [string, "null"], maxLength: 120 }
+        record_value: { type: [string, "null"], maxLength: 255 }
+      required: [name, relationship]
+    SigningAuthoritiesUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          maxItems: 6
+          items: { $ref: "#/components/schemas/SigningAuthorityInput" }
+      required: [items]
+    SigningAuthority:
+      allOf:
+        - { $ref: "#/components/schemas/SigningAuthorityInput" }
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            verification_status: { type: string, const: pending }
+            signature_status: { type: string, const: pending }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+          required: [id, verification_status, signature_status, created_at, updated_at]
+    SigningAuthorities:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/SigningAuthority" }
+      required: [items]
+    DocumentCreate:
+      type: object
+      properties:
+        object_key: { type: string, minLength: 1 }
+        filename: { type: string, minLength: 1, maxLength: 255 }
+        content_type: { type: string, enum: [application/pdf, image/jpeg, image/png, image/webp, audio/mp4, audio/aac, audio/mpeg, audio/wav, audio/webm] }
+        category: { type: string, enum: [photo, title_deed, survey, soil_report, voice_memo, other] }
+        display_name: { type: [string, "null"], maxLength: 255 }
+      required: [object_key, filename, content_type, category]
+    Document:
+      allOf:
+        - { $ref: "#/components/schemas/DocumentCreate" }
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            property_id: { type: string, format: uuid }
+            visibility: { type: string, enum: [private, shared, public] }
+            upload_status: { type: string, enum: [pending, uploaded, rejected, deleted] }
+            size_bytes: { type: [integer, "null"], exclusiveMinimum: 0 }
+            created_at: { type: string, format: date-time }
+          required: [id, property_id, visibility, upload_status, created_at]
+    ShareDisclosures:
+      type: object
+      properties:
+        show_name: { type: boolean, default: true }
+        show_description: { type: boolean, default: true }
+        show_location: { type: boolean, default: true }
+        show_price: { type: boolean, default: false }
+        show_specifications: { type: boolean, default: true }
+        show_exact_coordinates: { type: boolean, default: false }
+        show_photos: { type: boolean, default: true }
+        show_documents: { type: boolean, default: false }
+        show_broker_contact: { type: boolean, default: false }
+        show_reports: { type: boolean, default: false }
+        show_approach_roads: { type: boolean, default: false }
+      required: [show_price, show_exact_coordinates, show_photos, show_reports, show_approach_roads]
+    ShareLinkCreate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        expires_at: { type: [string, "null"], format: date-time }
+        disclosures: { $ref: "#/components/schemas/ShareDisclosures" }
+        visibility: { type: string, enum: [private, protected, unlisted], default: unlisted }
+        passcode: { type: [string, "null"], minLength: 6, maxLength: 12, pattern: '^[0-9]+$' }
+      required: [title, disclosures]
+    ShareLinkPatch:
+      type: object
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        expires_at: { type: [string, "null"], format: date-time }
+        disclosures: { $ref: "#/components/schemas/ShareDisclosures" }
+        visibility: { type: string, enum: [private, protected, unlisted] }
+        passcode: { type: [string, "null"], minLength: 6, maxLength: 12, pattern: '^[0-9]+$' }
+    ShareLink:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: [string, "null"], maxLength: 200 }
+        public_url: { type: [string, "null"], format: uri }
+        visibility: { type: string, enum: [private, protected, unlisted] }
+        expires_at: { type: [string, "null"], format: date-time }
+        revoked_at: { type: [string, "null"], format: date-time }
+        created_at: { type: string, format: date-time }
+        disclosures: { $ref: "#/components/schemas/ShareDisclosures" }
+      required: [id, public_url, visibility, created_at, disclosures]
+    ShareLinkPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ShareLink" }
+        limit: { type: integer, minimum: 1, maximum: 100 }
+        offset: { type: integer, minimum: 0 }
+        total: { type: integer, minimum: 0 }
+      required: [items, limit, offset, total]
+    PublicListing:
+      type: object
+      description: Only allowlisted fields enabled by the share link are returned; omitted fields are not disclosed. Media and document URLs are API proxy routes that revalidate the token and permission for every request.
+      properties:
+        title: { type: [string, "null"] }
+        description: { type: [string, "null"] }
+        category: { $ref: "#/components/schemas/PropertyCategory" }
+        specifications:
+          type: object
+          properties:
+            category: { type: [string, "null"] }
+            area: { type: [number, "null"] }
+            area_unit: { type: [string, "null"] }
+            soil_type: { type: [string, "null"] }
+            soil_type_other: { type: [string, "null"] }
+            water_tds_ppm: { type: [integer, "null"] }
+            agronomist_notes: { type: [string, "null"] }
+            water_sources: { type: array, items: { type: object } }
+            utilities: { type: array, items: { type: object } }
+        asking_price_inr: { type: [integer, "null"] }
+        area: { type: [number, "null"] }
+        area_unit: { type: [string, "null"] }
+        broker_contact:
+          type: [object, "null"]
+          properties:
+            business_name: { type: [string, "null"] }
+            public_phone: { type: [string, "null"] }
+            public_email: { type: [string, "null"], format: email }
+            city: { type: [string, "null"] }
+            district: { type: [string, "null"] }
+            state: { type: [string, "null"] }
+        approximate_location: { type: [string, "null"] }
+        latitude: { type: [number, "null"] }
+        longitude: { type: [number, "null"] }
+        road_access_type: { type: [string, "null"] }
+        road_width_ft: { type: [number, "null"] }
+        media:
+          type: array
+          items:
+            type: object
+            properties:
+              url: { type: string, format: uri }
+              name: { type: string }
+            required: [url, name]
+        reports:
+          type: array
+          items:
+            type: object
+            properties:
+              url: { type: string, format: uri }
+              name: { type: string }
+            required: [url, name]
+        documents:
+          type: array
+          items:
+            type: object
+            properties:
+              url: { type: string, format: uri }
+              name: { type: string }
+              category: { type: string }
+            required: [url, name, category]
+    BrokerProfileInput:
+      type: object
+      properties:
+        legal_name: { type: string, maxLength: 200 }
+        business_name: { type: [string, "null"], maxLength: 200 }
+        public_phone: { type: [string, "null"], maxLength: 40 }
+        public_email: { type: [string, "null"], format: email }
+        city: { type: [string, "null"], maxLength: 100 }
+        district: { type: [string, "null"], maxLength: 100 }
+        state: { type: [string, "null"], maxLength: 100 }
+        designation: { type: [string, "null"], maxLength: 200 }
+        license_number: { type: [string, "null"], maxLength: 100 }
+        license_jurisdiction: { type: [string, "null"], maxLength: 100 }
+      required: [legal_name]
+    BrokerProfilePatch:
+      type: object
+      minProperties: 1
+      properties:
+        legal_name: { type: string, maxLength: 200 }
+        business_name: { type: [string, "null"], maxLength: 200 }
+        public_phone: { type: [string, "null"], maxLength: 40 }
+        public_email: { type: [string, "null"], format: email }
+        city: { type: [string, "null"], maxLength: 100 }
+        district: { type: [string, "null"], maxLength: 100 }
+        state: { type: [string, "null"], maxLength: 100 }
+        designation: { type: [string, "null"], maxLength: 200 }
+        license_number: { type: [string, "null"], maxLength: 100 }
+        license_jurisdiction: { type: [string, "null"], maxLength: 100 }
+    BrokerProfile:
+      allOf:
+        - { $ref: "#/components/schemas/BrokerProfileInput" }
+        - type: object
+          properties:
+            account_email: { type: string, format: email }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+          required: [account_email, created_at, updated_at]
+    BusinessProfileInput:
+      type: object
+      properties:
+        business_name: { type: [string, "null"], maxLength: 200 }
+        public_phone: { type: [string, "null"], maxLength: 40 }
+        public_email: { type: [string, "null"], format: email }
+        city: { type: [string, "null"], maxLength: 100 }
+        district: { type: [string, "null"], maxLength: 100 }
+        state: { type: [string, "null"], maxLength: 100 }
+    BusinessProfilePatch:
+      allOf: [{ $ref: "#/components/schemas/BusinessProfileInput" }]
+      minProperties: 1
+    BusinessProfile:
+      allOf:
+        - { $ref: "#/components/schemas/BusinessProfileInput" }
+        - type: object
+          properties:
+            user_id: { type: string, format: uuid }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+          required: [user_id, created_at, updated_at]
+    Preferences:
+      type: object
+      properties:
+        language: { type: string, default: en }
+        theme: { type: string, enum: [light, dark], default: light }
+        default_disclosures: { $ref: "#/components/schemas/ShareDisclosures" }
+        default_expiration_days: { type: [integer, "null"], enum: [1, 7, 30, 90, 365, null], description: Default lifetime for links created from Settings; null means no expiration. }
+    PreferencesPatch:
+      type: object
+      minProperties: 1
+      properties:
+        language: { type: string, maxLength: 12 }
+        theme: { type: string, enum: [light, dark] }
+        default_disclosures: { $ref: "#/components/schemas/ShareDisclosures" }
+        default_expiration_days: { type: [integer, "null"], enum: [1, 7, 30, 90, 365, null], description: Default lifetime for links created from Settings; null means no expiration. }
+    OnboardingStatus:
+      type: object
+      properties:
+        completed: { type: boolean }
+        current_step: { type: [string, "null"] }
+        completed_steps:
+          type: array
+          items: { type: string }
+      required: [completed, completed_steps]
+    OnboardingPatch:
+      type: object
+      minProperties: 1
+      properties:
+        current_step: { type: [string, "null"] }
+        completed_steps:
+          type: array
+          items: { type: string }
+    Dashboard:
+      type: object
+      properties:
+        property_counts:
+          type: object
+          properties:
+            draft: { type: integer }
+            active: { type: integer }
+            archived: { type: integer }
+        recent_properties:
+          type: array
+          items: { $ref: "#/components/schemas/PropertySummary" }

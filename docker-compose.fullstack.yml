@@ -1,5 +1,6 @@
 services:
   minio:
+    pull_policy: missing
     ports:
       - "0.0.0.0:9000:9000"
 
@@ -14,12 +15,12 @@ services:
   fullstack:
     build:
       context: ..
-      dockerfile: broaker app/Dockerfile
+      dockerfile: Dockerfile
     restart: unless-stopped
     env_file:
       - path: .env
         required: true
-      - path: ../broaker app/.env.local
+      - path: ../.env.local
         required: true
     environment:
       RUN_MIGRATIONS: "true"

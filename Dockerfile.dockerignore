@@ -13,10 +13,10 @@
 **/.env.*
 !**/.env.example
 
-broaker app/.claude
-broaker app/.vscode
-broaker app/output
-broaker app/test
-broaker app/docs
-broaker app backend/tests
-broaker app backend/keycloak
+.claude
+.vscode
+output
+test
+docs
+backend/tests
+backend/keycloak

@@ -1,0 +1,140 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-broaker}
+      POSTGRES_USER: ${POSTGRES_USER:-broaker}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-broaker-dev-password}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-broaker-dev-redis-password}
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_PASSWORD:-broaker-dev-redis-password}
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$${REDIS_PASSWORD}\" redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  minio:
+    image: ${MINIO_IMAGE:-minio/minio:latest}
+    pull_policy: never
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-broaker-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-local-minio-password}
+      MINIO_API_CORS_ALLOW_ORIGIN: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173}
+    ports:
+      - "${MINIO_BIND_HOST:-127.0.0.1}:${MINIO_API_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+
+  minio-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: "no"
+    command: ["python", "-m", "app.scripts.init_minio_bucket"]
+    environment:
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-broaker-documents}
+      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-broaker-minio}
+      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-local-minio-password}
+    depends_on:
+      - minio
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      APP_NAME: ${APP_NAME:-Broaker API}
+      ENVIRONMENT: local
+      DEBUG: ${DEBUG:-true}
+      API_V1_PREFIX: ${API_V1_PREFIX:-/api/v1}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173}
+      AUTO_CREATE_TABLES: ${AUTO_CREATE_TABLES:-false}
+      POSTGRES_DB: ${POSTGRES_DB:-broaker}
+      POSTGRES_USER: ${POSTGRES_USER:-broaker}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-broaker-dev-password}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-broaker}:${POSTGRES_PASSWORD:-broaker-dev-password}@postgres:5432/${POSTGRES_DB:-broaker}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-broaker-dev-redis-password}@redis:6379/0
+      COGNITO_REGION: ${COGNITO_REGION:-}
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID:-}
+      COGNITO_APP_CLIENT_ID: ${COGNITO_APP_CLIENT_ID:-}
+      AUTH_PROVIDER: ${AUTH_PROVIDER:-password}
+      PASSWORD_AUTH_SECRET: ${PASSWORD_AUTH_SECRET:-}
+      SHARE_LINK_ENCRYPTION_KEY: ${SHARE_LINK_ENCRYPTION_KEY:-}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER:-http://localhost:8081/realms/broaker-test}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL:-http://keycloak:8080/realms/broaker-test/protocol/openid-connect/certs}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-broaker-api}
+      KEYCLOAK_REGISTRATION_CLIENT_ID: ${KEYCLOAK_REGISTRATION_CLIENT_ID:-}
+      KEYCLOAK_REGISTRATION_CLIENT_SECRET: ${KEYCLOAK_REGISTRATION_CLIENT_SECRET:-}
+      KEYCLOAK_ADMIN_BASE_URL: ${KEYCLOAK_ADMIN_BASE_URL:-http://keycloak:8080}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://minio:9000}
+      S3_PUBLIC_ENDPOINT_URL: ${S3_PUBLIC_ENDPOINT_URL:-http://localhost:9000}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-broaker-documents}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-${MINIO_ROOT_USER:-broaker-minio}}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-${MINIO_ROOT_PASSWORD:-local-minio-password}}
+      S3_ADDRESSING_STYLE: ${S3_ADDRESSING_STYLE:-path}
+      S3_PRESIGNED_URL_EXPIRES_SECONDS: ${S3_PRESIGNED_URL_EXPIRES_SECONDS:-600}
+      PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:-http://localhost:8000}
+    ports:
+      - "${API_BIND_HOST:-127.0.0.1}:${API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1
+    profiles: ["testing"]
+    command: ["start-dev", "--import-realm", "--hostname=${KEYCLOAK_HOSTNAME:-http://localhost:8081}"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-local-keycloak-admin-password}
+    ports:
+      - "${KEYCLOAK_BIND_HOST:-127.0.0.1}:${KEYCLOAK_PORT:-8081}:8080"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+      - keycloak_h2_data:/opt/keycloak/data/h2
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  keycloak_h2_data:

@@ -26,7 +26,7 @@ npx expo install --fix      # fix incompatible package versions
 
 - When asked to run the app/server without specifying mock mode, start the regular Expo app with `npm start` (or `npm start -- --host lan` for Expo Go on a physical device). Do not use `start:mock` by default.
 - The regular app uses live mode and reads `EXPO_PUBLIC_API_URL` from `.env.local`. It must point to the running backend's `/api/v1` base URL. For a physical device, use the development machine's LAN IP, not `localhost`.
-- Start the actual backend and its dependencies from the sibling backend repository using its documented Compose setup: `docker compose --profile testing up --build -d`. For physical-device access, set `API_BIND_HOST=0.0.0.0` and `MINIO_BIND_HOST=0.0.0.0` in the backend `.env`, use a device-reachable `PUBLIC_API_BASE_URL` and `S3_PUBLIC_ENDPOINT_URL`, and configure Keycloak's hostname/issuer consistently with the LAN address. Keep those development services on a trusted network.
+- Backend source and Compose files live in `backend/`. Use `scripts/run-fullstack.sh` (or `scripts/run-fullstack.cmd`) to launch the Expo frontend, API, and supporting services together. The backend-only Compose file can be run from `backend/`. For physical-device access, use a device-reachable LAN address for advertised API, storage, and Keycloak URLs. These development services bind to all host interfaces in the full-stack overlay, so keep them on a trusted network.
 - Select mock mode only when the user explicitly asks for a mock/demo server or mock data; use `npm run start:mock` (and `npm run web:mock` for the web demo). Do not silently substitute mock mode when the backend is unavailable; report the backend startup problem instead.
 - Expo Go can run the normal app in live mode using its in-memory SQLite database. Persistent native SQLite with SQLCipher requires a development build, as described in `README.md`.
 - On a physical iPhone, current Expo Go requires Expo Go and Expo CLI to be signed in to the same Expo account before it opens a development server. If Expo Go shows a sign-in message, run `npx expo login` in the frontend repository and sign into that same account in Expo Go. This account check does not apply to Android or simulators.
@@ -62,8 +62,8 @@ Docs: https://docs.expo.dev/eas/index.md
 
 Before implementing or changing an API call, read both source-of-truth files:
 
-- `/Users/sanjay/Documents/ChatGPT/broaker app backend/docs/api/frontend-api-contract.md`
-- `/Users/sanjay/Documents/ChatGPT/broaker app backend/docs/api/openapi.yaml`
+- `backend/docs/api/frontend-api-contract.md`
+- `backend/docs/api/openapi.yaml`
 
 Follow these contract rules:
 
