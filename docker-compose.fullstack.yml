@@ -1,17 +1,15 @@
 services:
+  api:
+    profiles: ["backend-only"]
+
   minio:
     pull_policy: missing
-    ports:
-      - "0.0.0.0:9000:9000"
 
   keycloak:
     command:
       - start-dev
       - --import-realm
       - --hostname=http://${HOST_LAN_IP:?Export HOST_LAN_IP as your host LAN IP}:8081
-    ports:
-      - "0.0.0.0:8081:8080"
-
   fullstack:
     build:
       context: ..

@@ -33,7 +33,9 @@ if errorlevel 1 (
 )
 
 pushd "%APP_DIR%"
-docker compose --env-file "%BACKEND_DIR%\.env" -p broaker-app -f "%BACKEND_DIR%\docker-compose.yml" -f "%APP_DIR%\docker-compose.fullstack.yml" --profile testing up --build -d
+set "MINIO_BIND_HOST=0.0.0.0"
+set "KEYCLOAK_BIND_HOST=0.0.0.0"
+docker compose --env-file "%BACKEND_DIR%\.env" -p broaker-app -f "%BACKEND_DIR%\docker-compose.yml" -f "%APP_DIR%\docker-compose.fullstack.yml" up --build -d
 if errorlevel 1 (
   popd
   pause

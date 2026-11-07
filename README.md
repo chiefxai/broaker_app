@@ -76,7 +76,7 @@ In the frontend, import reusable components from `@/components/core` and theme A
 
 ## Run the Expo app and API in Docker
 
-The launcher builds and starts the Expo Go frontend, FastAPI backend, PostgreSQL, Redis, MinIO, and Keycloak. Start Docker Desktop first, and connect your phone and development machine to the same trusted network.
+The launcher builds and starts the Expo Go frontend, FastAPI backend, PostgreSQL, Redis, and MinIO. The app uses the local password auth provider by default. Start Docker Desktop first, and connect your phone and development machine to the same trusted network.
 
 Set up the local environment files once from the repository root:
 
@@ -100,7 +100,7 @@ Then launch with one command from the repository root:
 
 On Windows, after the one-time environment setup, double-click `scripts\run-fullstack.cmd` from File Explorer, or run `scripts\run-fullstack.cmd` in Command Prompt. Both launchers detect the host LAN IPv4 address automatically. If detection fails, set `HOST_LAN_IP` to the host's LAN address and run the script again.
 
-When startup completes, open the `exp://` URL printed by the script in Expo Go. The API is on port 8001; Keycloak and MinIO use ports 8081 and 9000. These development services bind to all host interfaces, so run them only on a trusted network.
+When startup completes, open the `exp://` URL printed by the script in Expo Go. The API is on port 8001 and MinIO on port 9000. These development services bind to all host interfaces, so run them only on a trusted network.
 
 ## App libraries
 
