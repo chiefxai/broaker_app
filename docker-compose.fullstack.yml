@@ -22,6 +22,9 @@ services:
         required: true
     environment:
       RUN_MIGRATIONS: "true"
+      # Local-only fallback so password registration works with the example .env.
+      # Set PASSWORD_AUTH_SECRET in backend/.env to override this value.
+      PASSWORD_AUTH_SECRET: ${PASSWORD_AUTH_SECRET:-broaker-local-development-password-auth-secret-not-for-production}
       API_PORT: "8000"
       EXPO_PORT: "8081"
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-broaker}:${POSTGRES_PASSWORD:-broaker-dev-password}@postgres:5432/${POSTGRES_DB:-broaker}

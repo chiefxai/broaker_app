@@ -100,7 +100,7 @@ Then launch with one command from the repository root:
 
 On Windows, after the one-time environment setup, double-click `scripts\run-fullstack.cmd` from File Explorer, or run `scripts\run-fullstack.cmd` in Command Prompt. Both launchers detect the host LAN IPv4 address automatically. If detection fails, set `HOST_LAN_IP` to the host's LAN address and run the script again.
 
-When startup completes, open the `exp://` URL printed by the script in Expo Go. The API is on port 8001 and MinIO on port 9000. These development services bind to all host interfaces, so run them only on a trusted network.
+When startup completes, open the `exp://` URL printed by the script in Expo Go. For web preview in a browser on the development machine, use `http://localhost:8082` so browser security headers are honored on a trustworthy localhost origin. Opening the LAN IP over plain HTTP can show a Cross-Origin-Opener-Policy warning; use HTTPS for browser access from another device. The API is on port 8001 and MinIO on port 9000. These development services bind to all host interfaces, so run them only on a trusted network.
 
 ## App libraries
 
