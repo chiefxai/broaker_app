@@ -1,4 +1,3 @@
-import * as Crypto from 'expo-crypto';
 import * as Location from 'expo-location';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
@@ -40,6 +39,7 @@ import type { LocalProperty } from '@/data/mock/properties';
 import { MaxContentWidth, Radius, Spacing, Typography } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme-provider';
 import { useToast } from '@/components/core/toast/ToastProvider';
+import { createUuid } from '@/utils/uuid';
 
 const STEP_TITLES = ['Basic Information', 'Location & Land Details', 'Features & Utilities', 'Financials & Pricing', 'Ownership & Documents', 'Photos, Review & Save'];
 const SOIL_TYPES = [{ value: 'red', label: 'Red Soil' }, { value: 'black', label: 'Black Soil' }, { value: 'alluvial', label: 'Alluvial Soil' }, { value: 'sandy_loam', label: 'Sandy Loam' }, { value: 'other', label: 'Other Mix / Clay' }] as const;
@@ -327,7 +327,7 @@ export default function PropertyCreationScreen() {
       setMockAuthorities((current) => {
         if (id) return current.map((authority) => authority.id === id ? { ...details, id } : authority);
         if (current.length >= 6) return current;
-        return [...current, { ...details, id: Crypto.randomUUID() }];
+        return [...current, { ...details, id: createUuid() }];
       });
       return;
     }
@@ -387,13 +387,13 @@ export default function PropertyCreationScreen() {
     const fileSize = asset.size ?? file?.size ?? 0;
     const { contentType } = validateLegalDocumentAsset({ filename: asset.name, mimeType: asset.mimeType, sizeBytes: fileSize });
     if (isMockMode) {
-      setMockDocuments((current) => [...current, { id: Crypto.randomUUID(), name: asset.name, sizeLabel: `${(fileSize / 1024 / 1024).toFixed(1)} MB`, detail: `${category.replaceAll('_', ' ')} · Mock file, not uploaded`, state: 'pending' }]);
+      setMockDocuments((current) => [...current, { id: createUuid(), name: asset.name, sizeLabel: `${(fileSize / 1024 / 1024).toFixed(1)} MB`, detail: `${category.replaceAll('_', ' ')} · Mock file, not uploaded`, state: 'pending' }]);
       return;
     }
     setIsUploadingLegalDocument(true);
     try {
       const id = propertyId ?? await ensureDraft();
-      await offlineStore.saveAsset({ id: Crypto.randomUUID(), property_id: id, local_uri: asset.uri, filename: asset.name, content_type: contentType, category, display_name: null, visibility: 'private' });
+      await offlineStore.saveAsset({ id: createUuid(), property_id: id, local_uri: asset.uri, filename: asset.name, content_type: contentType, category, display_name: null, visibility: 'private' });
       setPropertyId(id);
       await queryClient.invalidateQueries({ queryKey: ['local-property-assets', id] });
       void offlineStore.syncNow();
@@ -463,7 +463,7 @@ export default function PropertyCreationScreen() {
       setMockPhotos((current) => [
         ...current,
         ...selectedAssets.map((asset, index) => ({
-          id: Crypto.randomUUID(),
+          id: createUuid(),
           uri: asset.uri,
           label: asset.fileName || `property-photo-${index + 1}`,
           isCover: current.length === 0 && index === 0,
@@ -490,7 +490,7 @@ export default function PropertyCreationScreen() {
     setPropertyId(id);
     for (let index = 0; index < preparedPhotos.length; index += 1) {
       const { asset, contentType, filename } = preparedPhotos[index];
-      const assetId = Crypto.randomUUID();
+      const assetId = createUuid();
       await offlineStore.saveAsset({ id: assetId, property_id: id, local_uri: asset.uri, filename, content_type: contentType, category: 'photo', display_name: filename, visibility: 'shared' });
       setPendingPhotoPreviews((current) => [...current, { id: assetId, uri: asset.uri, label: filename, isCover: reviewPhotos.length === 0 && index === 0 }]);
     }
@@ -526,7 +526,7 @@ export default function PropertyCreationScreen() {
     if (!isRecordingVoiceMemo) return;
     if (isMockMode) {
       const durationSeconds = Math.max(1, mockRecordingElapsedSeconds);
-      setMockVoiceMemos((current) => [...current, { id: Crypto.randomUUID(), title: `Field voice log ${current.length + 1}`, durationSeconds, state: 'ready' }]);
+      setMockVoiceMemos((current) => [...current, { id: createUuid(), title: `Field voice log ${current.length + 1}`, durationSeconds, state: 'ready' }]);
       setIsRecordingVoiceMemo(false);
       showToast('Voice log saved in test mode.', 'success');
       return;
@@ -544,7 +544,7 @@ export default function PropertyCreationScreen() {
       const isWebRecording = Platform.OS === 'web';
       const contentType = isWebRecording ? 'audio/webm' as const : 'audio/mp4' as const;
       const extension = isWebRecording ? 'webm' : 'm4a';
-      const filename = `field-voice-log-${Crypto.randomUUID()}.${extension}`;
+      const filename = `field-voice-log-${createUuid()}.${extension}`;
       const file: Blob = isWebRecording
         ? await fetch(uri).then(async (response) => {
           if (!response.ok) throw new Error('The browser could not read the voice recording. Record it again.');
@@ -556,7 +556,7 @@ export default function PropertyCreationScreen() {
 
       const id = propertyId ?? await ensureDraft();
       setPropertyId(id);
-      await offlineStore.saveAsset({ id: Crypto.randomUUID(), property_id: id, local_uri: uri, filename, content_type: contentType, category: 'voice_memo', display_name: `Field voice log · ${new Date().toLocaleString()}`, visibility: 'private' });
+      await offlineStore.saveAsset({ id: createUuid(), property_id: id, local_uri: uri, filename, content_type: contentType, category: 'voice_memo', display_name: `Field voice log · ${new Date().toLocaleString()}`, visibility: 'private' });
       await queryClient.invalidateQueries({ queryKey: ['local-property-assets', id] });
       void offlineStore.syncNow();
       showToast('Field voice log saved on this device. Upload will continue in the background.', 'success');
@@ -873,7 +873,7 @@ export default function PropertyCreationScreen() {
   const ensureDraft = async () => {
     if (!draft.title.trim()) throw new Error('Enter a property title to save this draft.');
     if (isMockMode) {
-      const id = propertyId ?? Crypto.randomUUID();
+      const id = propertyId ?? createUuid();
       setPropertyId(id);
       const local = localProperty ?? {
         id, title: draft.title.trim(), categoryLabel: CATEGORY_LABELS[draft.category],
@@ -883,7 +883,7 @@ export default function PropertyCreationScreen() {
       await queryClient.invalidateQueries({ queryKey: ['local-properties'] });
       return id;
     }
-    const id = propertyId ?? Crypto.randomUUID();
+    const id = propertyId ?? createUuid();
     setPropertyId(id);
     await persistOfflineDraft(id, step);
     return id;
@@ -915,7 +915,7 @@ export default function PropertyCreationScreen() {
       id = await ensureDraft();
       await persistLocal(publishComplete, id);
     } else {
-      id = propertyId ?? Crypto.randomUUID();
+      id = propertyId ?? createUuid();
       setPropertyId(id);
       await persistOfflineDraft(id, targetStep);
     }

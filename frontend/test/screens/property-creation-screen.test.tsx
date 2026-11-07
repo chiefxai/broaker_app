@@ -23,7 +23,7 @@ const mockUseLocalProperty = jest.fn<() => { data: (typeof import('@/data/mock/p
 
 jest.mock('@/data/database', () => ({ useLocalProperty: () => mockUseLocalProperty(), useSaveLocalProperty: () => mockSaveProperty, useOfflinePropertyStore: () => mockOfflineStore }));
 jest.mock('expo-router', () => ({ router: { back: jest.fn(), canGoBack: jest.fn(() => false), replace: jest.fn(), push: jest.fn() }, useLocalSearchParams: jest.fn(() => ({})) }));
-jest.mock('expo-crypto', () => ({ randomUUID: jest.fn(() => `test-property-${++mockUuidCounter}`) }));
+jest.mock('expo-crypto', () => ({ getRandomBytes: jest.fn(() => new Uint8Array(16).fill(++mockUuidCounter)) }));
 jest.mock('expo-location', () => ({
   Accuracy: { Balanced: 3 },
   requestForegroundPermissionsAsync: jest.fn(),

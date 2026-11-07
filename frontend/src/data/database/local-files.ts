@@ -1,5 +1,5 @@
 import { Directory, File, Paths } from 'expo-file-system';
-import * as Crypto from 'expo-crypto';
+import { createUuid } from '@/utils/uuid';
 
 const localAssetDirectory = new Directory(Paths.document, 'broaker-pending-assets');
 
@@ -10,7 +10,7 @@ function safeFilename(filename: string) {
 /** Copies picker/cache output into durable app storage before its URI is queued in SQLite. */
 export async function keepLocalAsset(uri: string, filename: string): Promise<string> {
   localAssetDirectory.create({ idempotent: true, intermediates: true });
-  const destination = new File(localAssetDirectory, `${Crypto.randomUUID()}-${safeFilename(filename)}`);
+  const destination = new File(localAssetDirectory, `${createUuid()}-${safeFilename(filename)}`);
   await new File(uri).copy(destination);
   if (!destination.exists || destination.size === 0) throw new Error('The selected file could not be saved locally. Choose it again.');
   return destination.uri;
