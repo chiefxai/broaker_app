@@ -147,18 +147,6 @@ export default function PropertyCreationScreen() {
   const audioPlayerStatus = useAudioPlayerStatus(audioPlayer);
   const saveLocalProperty = useSaveLocalProperty();
   const offlineStore = useOfflinePropertyStore();
-  const liveEditQuery = useQuery({
-    queryKey: ['property-editor', requestedPropertyId],
-    queryFn: async () => {
-      if (!auth?.accessToken || !requestedPropertyId) throw new Error('Sign in to edit this property.');
-      const [property, privateNotes] = await Promise.all([
-        getPropertyRecord(auth.accessToken, requestedPropertyId),
-        getPropertyPrivateNotes(auth.accessToken, requestedPropertyId),
-      ]);
-      return { property, privateNotes };
-    },
-    enabled: Boolean(requestedPropertyId && !isMockMode && auth?.accessToken),
-  });
   const [hydratedEditId, setHydratedEditId] = useState<string | null>(null);
   const [step, setStep] = useState(1);
   const [mapInteractionActive, setMapInteractionActive] = useState(false);
@@ -168,6 +156,19 @@ export default function PropertyCreationScreen() {
   const serverPropertyId = localEditQuery.data
     ? localEditQuery.data.remoteId ?? (localEditQuery.data.syncStatus === 'synced' ? localEditQuery.data.id : null)
     : requestedPropertyId ?? null;
+  const liveEditQuery = useQuery({
+    queryKey: ['property-editor', requestedPropertyId, serverPropertyId],
+    queryFn: async () => {
+      if (!auth?.accessToken || !serverPropertyId) throw new Error('Sign in to edit this property.');
+      const [property, privateNotes] = await Promise.all([
+        getPropertyRecord(auth.accessToken, serverPropertyId),
+        getPropertyPrivateNotes(auth.accessToken, serverPropertyId),
+      ]);
+      return { property, privateNotes };
+    },
+    enabled: Boolean(requestedPropertyId && !isMockMode && auth?.accessToken && serverPropertyId
+      && (Platform.OS !== 'web' || localEditQuery.isSuccess)),
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [titleError, setTitleError] = useState('');
@@ -848,26 +849,24 @@ export default function PropertyCreationScreen() {
   };
 
   const persistOfflineDraft = async (id: string, savedStep: number, publishWhenSynced = false) => {
-    const base = localProperty ?? {
+    const existing = await offlineStore.getProperty(id);
+    const base = existing ?? localProperty ?? {
       id, title: draft.title.trim(), categoryLabel: CATEGORY_LABELS[draft.category],
       status: { label: 'Draft', tone: 'warning' as const }, area: null, location: null, priceInr: null,
     };
     await offlineStore.saveProperty({
       ...base,
       ownerSub: auth?.currentUser?.sub ?? null,
-      remoteId: localEditData?.remoteId ?? (requestedPropertyId === id ? requestedPropertyId : null),
+      remoteId: existing?.remoteId ?? localEditData?.remoteId ?? (requestedPropertyId === id ? requestedPropertyId : null),
       syncStatus: 'pending',
       offlineDraft: { draft, loanActive, irrigationMethod, publishWhenSynced },
-      offlineStep: Math.max(savedStep, localEditData?.offlineStep ?? 0),
+      offlineStep: Math.max(savedStep, existing?.offlineStep ?? localEditData?.offlineStep ?? 0),
       syncError: undefined,
       footerLabel: 'Saved on this device · waiting to sync',
     });
     await queryClient.invalidateQueries({ queryKey: ['local-properties'] });
     await queryClient.invalidateQueries({ queryKey: ['local-properties', id] });
     setStatus('Saved on this device · sync queued');
-    if (!isMockMode && auth?.accessToken && auth.currentUser?.sub) {
-      void offlineStore.syncNow().then(() => queryClient.invalidateQueries({ queryKey: ['local-properties'] }));
-    }
   };
 
   const ensureDraft = async () => {
@@ -909,7 +908,7 @@ export default function PropertyCreationScreen() {
     }
   };
 
-  const saveStep = async (targetStep = step) => {
+  const saveStep = async (targetStep = step, publishWhenSynced = false) => {
     let id: string;
     if (isMockMode) {
       id = await ensureDraft();
@@ -917,7 +916,14 @@ export default function PropertyCreationScreen() {
     } else {
       id = propertyId ?? createUuid();
       setPropertyId(id);
-      await persistOfflineDraft(id, targetStep);
+      await persistOfflineDraft(id, targetStep, publishWhenSynced);
+      const result = await offlineStore.syncNow();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['local-properties'] }),
+        queryClient.invalidateQueries({ queryKey: ['local-properties', id] }),
+      ]);
+      if (result.errors.length) setStatus('Saved on this device · sync pending');
+      else setStatus('Saved just now');
     }
     setError('');
     return id;
@@ -982,18 +988,18 @@ export default function PropertyCreationScreen() {
     if (!validateRequiredFields()) return;
     if (step >= 4 && !validateFinancialFields()) return;
     return runSave(async () => {
-      const id = await saveStep(5);
+      const id = await saveStep(5, !publishComplete);
       if (isMockMode) {
         await persistLocal(true, id);
-      } else if (!publishComplete) {
-        await persistOfflineDraft(id, 5, true);
       }
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['local-properties'] }),
         queryClient.invalidateQueries({ queryKey: ['property-editor', id] }),
       ]);
-      setStatus(isMockMode ? (publishComplete ? 'Property saved' : 'Property published') : publishComplete ? 'Property saved' : 'Saved on this device · publishing when synced');
-      showToast(isMockMode ? (publishComplete ? 'Property saved.' : 'Property published.') : publishComplete ? 'Property saved.' : 'Property saved on this device. It will publish when connected.', 'success');
+      const savedProperty = isMockMode ? null : await offlineStore.getProperty(id);
+      const synced = savedProperty?.syncStatus === 'synced';
+      setStatus(isMockMode ? (publishComplete ? 'Property saved' : 'Property published') : synced ? (publishComplete ? 'Property saved' : 'Property published') : 'Saved on this device · sync pending');
+      showToast(isMockMode ? (publishComplete ? 'Property saved.' : 'Property published.') : synced ? (publishComplete ? 'Property saved.' : 'Property published.') : 'Property saved on this device. Sync is pending.', synced || isMockMode ? 'success' : 'warning');
       if (router.canGoBack()) router.back();
       else router.replace('/');
     });

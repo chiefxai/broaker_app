@@ -1,7 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useOptionalAuth } from '@/auth/auth-provider';
 import { getLocalProperty, saveLocalProperty } from './property-repository.web';
 import type { LocalPropertyAsset } from './property-repository';
 import type { LocalProperty } from '@/data/mock/properties';
+import { syncPendingWebProperties } from './offline-sync.web';
 
 const ASSETS_KEY = '@broaker/web-property-assets/v1';
 
@@ -11,6 +13,7 @@ async function readAssets(): Promise<LocalPropertyAsset[]> {
 }
 
 export function useOfflinePropertyStore() {
+  const auth = useOptionalAuth();
   return {
     saveProperty: (property: LocalProperty) => saveLocalProperty(property),
     getProperty: (id: string) => getLocalProperty(id),
@@ -21,6 +24,8 @@ export function useOfflinePropertyStore() {
     },
     listAssets: async (propertyId: string) => (await readAssets()).filter((asset) => asset.property_id === propertyId),
     deleteAsset: async (id: string) => { await AsyncStorage.setItem(ASSETS_KEY, JSON.stringify((await readAssets()).filter((asset) => asset.id !== id))); },
-    syncNow: async () => ({ synced: 0, errors: [] as { id: string; message: string }[] }),
+    syncNow: () => auth?.accessToken && auth.currentUser?.sub
+      ? syncPendingWebProperties(auth.accessToken, auth.currentUser.sub)
+      : Promise.resolve({ synced: 0, errors: [] as { id: string; message: string }[] }),
   };
 }
